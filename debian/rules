@@ -9,4 +9,4 @@ override_dh_auto_build:
 	make -C webgles
 
 override_dh_auto_install:
-	make -C webgles install INSTALL_PREFIX=$(CURDIR)/debian/duetto-utils/opt/duetto DUETTO_PREFIX=/opt/duetto
+	make -C webgles install INSTALL_PREFIX=$(CURDIR)/debian/duetto-libs/opt/duetto DUETTO_PREFIX=/opt/duetto
