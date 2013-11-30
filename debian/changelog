@@ -1,3 +1,9 @@
+duetto-libs (0.9.2-1) saucy; urgency=low
+
+  * Debian fixes
+
+ -- Alessandro Pignotti <alessandro@leaningtech.com>  Sat, 30 Nov 2013 20:29:55 +0100
+
 duetto-libs (0.9.2) raring; urgency=low
 
   * Initial release.
