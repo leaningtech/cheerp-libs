@@ -26,8 +26,6 @@
 #include "gl2.h"
 extern client::WebGLRenderingContext* webGLES;
 void webGLESInit(const client::String& canvasName);
-client::ArrayBufferView* BufferForPointer(const void*);
-client::ArrayBufferView* BufferForPointer(const void*, unsigned int size);
 client::WebGLProgram* webGLESLookupWebGLProgram(int objId);
 client::WebGLShader* webGLESLookupWebGLShader(int objId);
 client::WebGLBuffer* webGLESLookupWebGLBuffer(int objId);

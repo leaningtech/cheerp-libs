@@ -31,22 +31,3 @@ void webGLESInit(const client::String& canvasName)
 	if (webGLES == NULL)
 		client::window.alert("Sorry, we looked hard, but no sign of WebGL has been found :(");
 }
-
-client::ArrayBufferView* BufferForPointer(const void* ptr)
-{
-	size_t offset=__builtin_duetto_pointer_offset(ptr);
-	//Use an Int8Array as the fake type, it does not matter anyway
-	client::Int8Array* buf=(client::Int8Array*)__builtin_duetto_pointer_base(ptr);
-	if(offset==0)
-		return buf;
-	else
-		return buf->subarray(offset);
-}
-
-client::ArrayBufferView* BufferForPointer(const void* ptr, unsigned int size)
-{
-	size_t offset=__builtin_duetto_pointer_offset(ptr);
-	//Use an Int8Array as the fake type, the actual data type is described by the BYTES_PER_ELEMENT attribute
-	client::Int8Array* buf=(client::Int8Array*)__builtin_duetto_pointer_base(ptr);
-	return buf->subarray(offset, size/buf->get_BYTES_PER_ELEMENT());
-}
