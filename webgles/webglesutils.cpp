@@ -29,5 +29,5 @@ void webGLESInit(const client::String& canvasName)
 	auto canvas = static_cast<client::HTMLCanvasElement*>(client::document.getElementById(canvasName));
 	webGLES = static_cast<client::WebGLRenderingContext*>(canvas->getContext("experimental-webgl"));
 	if (webGLES == NULL)
-		client::window.alert("Sorry, we looked hard, but no sign of WebGL has been found :(");
+		client::console.log("Sorry, we looked hard, but no sign of WebGL has been found :(");
 }
