@@ -1,40 +1,40 @@
-duetto-libs (1.0-1) trusty; urgency=medium
+cheerp-libs (1.0-1) trusty; urgency=medium
 
   * New release
 
  -- Alessandro Pignotti <alessandro@leaningtech.com>  Wed, 21 May 2014 16:33:37 +0200
 
-duetto-libs (0.9.6-1) saucy; urgency=low
+cheerp-libs (0.9.6-1) saucy; urgency=low
 
   * New release
 
  -- Alessandro Pignotti <alessandro@leaningtech.com>  Thu, 17 Apr 2014 17:27:01 +0200
 
-duetto-libs (0.9.5-1) saucy; urgency=low
+cheerp-libs (0.9.5-1) saucy; urgency=low
 
   * New release
 
  -- Alessandro Pignotti <alessandro@leaningtech.com>  Thu, 03 Apr 2014 16:21:47 +0200
 
-duetto-libs (0.9.4-1) saucy; urgency=low
+cheerp-libs (0.9.4-1) saucy; urgency=low
 
   * New release
 
  -- Alessandro Pignotti <alessandro@leaningtech.com>  Mon, 17 Mar 2014 02:07:56 +0100
 
-duetto-libs (0.9.3-1) saucy; urgency=low
+cheerp-libs (0.9.3-1) saucy; urgency=low
 
   * New release
 
  -- Alessandro Pignotti <alessandro@leaningtech.com>  Thu, 02 Jan 2014 18:32:15 +0100
 
-duetto-libs (0.9.2-1) saucy; urgency=low
+cheerp-libs (0.9.2-1) saucy; urgency=low
 
   * Debian fixes
 
  -- Alessandro Pignotti <alessandro@leaningtech.com>  Sat, 30 Nov 2013 20:29:55 +0100
 
-duetto-libs (0.9.2) raring; urgency=low
+cheerp-libs (0.9.2) raring; urgency=low
 
   * Initial release.
 

@@ -141,12 +141,12 @@ void glBlendFuncSeparate(unsigned int srcRGB, unsigned int dstRGB, unsigned int 
 void glBufferData (GLenum target, GLsizeiptr size, const void* data, GLenum usage)
 {
 	if(data==NULL) webGLES->bufferData(target, size, usage);
-	else webGLES->bufferData(target, duetto::MakeArrayBufferView(data, size), usage);
+	else webGLES->bufferData(target, cheerp::MakeArrayBufferView(data, size), usage);
 }
 
 void glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const void* data)
 {
-	webGLES->bufferSubData(target, offset, duetto::MakeArrayBufferView(data, size));
+	webGLES->bufferSubData(target, offset, cheerp::MakeArrayBufferView(data, size));
 }
 
 unsigned int glCheckFramebufferStatus(unsigned int target)
@@ -470,7 +470,7 @@ void glPolygonOffset(float factor, float units)
 
 void glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void* data)
 {
-	webGLES->readPixels(x, y, width, height, format, type, duetto::MakeArrayBufferView(data));
+	webGLES->readPixels(x, y, width, height, format, type, cheerp::MakeArrayBufferView(data));
 }
 
 void glRenderbufferStorage(unsigned int target, unsigned int internalformat, int width, int height)
@@ -520,7 +520,7 @@ void glStencilOpSeparate(unsigned int face, unsigned int fail, unsigned int zfai
 
 void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* data)
 {
-	client::ArrayBufferView* buf=data?duetto::MakeArrayBufferView(data):NULL;
+	client::ArrayBufferView* buf=data?cheerp::MakeArrayBufferView(data):NULL;
 	webGLES->texImage2D(target, level, internalformat, width, height, border, format, type, buf);
 }
 
@@ -536,7 +536,7 @@ void glTexParameteri(unsigned int target, unsigned int pname, int param)
 
 void glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data)
 {
-	webGLES->texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, duetto::MakeArrayBufferView(data));
+	webGLES->texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, cheerp::MakeArrayBufferView(data));
 }
 
 void glUniform1f(unsigned int location, float x)
@@ -546,7 +546,7 @@ void glUniform1f(unsigned int location, float x)
 
 void glUniform1fv (GLint location, GLsizei count, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform1fv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -557,7 +557,7 @@ void glUniform1i(unsigned int location, int x)
 
 void glUniform1iv (GLint location, GLsizei count, const GLint* value)
 {
-	client::Int32Array* buf=duetto::MakeTypedArray(value);
+	client::Int32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform1iv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -568,7 +568,7 @@ void glUniform2f(unsigned int location, float x, float y)
 
 void glUniform2fv (GLint location, GLsizei count, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform2fv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -579,7 +579,7 @@ void glUniform2i(unsigned int location, int x, int y)
 
 void glUniform2iv (GLint location, GLsizei count, const GLint* value)
 {
-	client::Int32Array* buf=duetto::MakeTypedArray(value);
+	client::Int32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform2iv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -590,7 +590,7 @@ void glUniform3f(unsigned int location, float x, float y, float z)
 
 void glUniform3fv (GLint location, GLsizei count, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform3fv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -601,7 +601,7 @@ void glUniform3i(unsigned int location, int x, int y, int z)
 
 void glUniform3iv (GLint location, GLsizei count, const GLint* value)
 {
-	client::Int32Array* buf=duetto::MakeTypedArray(value);
+	client::Int32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform3iv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -612,7 +612,7 @@ void glUniform4f(unsigned int location, float x, float y, float z, float w)
 
 void glUniform4fv (GLint location, GLsizei count, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform4fv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
@@ -623,25 +623,25 @@ void glUniform4i(unsigned int location, int x, int y, int z, int w)
 
 void glUniform4iv (GLint location, GLsizei count, const GLint* value)
 {
-	client::Int32Array* buf=duetto::MakeTypedArray(value);
+	client::Int32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniform4iv(webGLESLookupWebGLUniformLocation(location), buf);
 }
 
 void glUniformMatrix2fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniformMatrix2fv(webGLESLookupWebGLUniformLocation(location), transpose, buf);
 }
 
 void glUniformMatrix3fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniformMatrix3fv(webGLESLookupWebGLUniformLocation(location), transpose, buf);
 }
 
 void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
-	client::Float32Array* buf=duetto::MakeTypedArray(value);
+	client::Float32Array* buf=cheerp::MakeTypedArray(value);
 	webGLES->uniformMatrix4fv(webGLESLookupWebGLUniformLocation(location), transpose, buf);
 }
 

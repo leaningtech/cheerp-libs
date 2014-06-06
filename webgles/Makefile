@@ -1,15 +1,15 @@
 .PHONY: install
 
-INSTALL_PREFIX ?= /opt/duetto
-DUETTO_PREFIX ?= /opt/duetto
+INSTALL_PREFIX ?= /opt/cheerp
+CHEERP_PREFIX ?= /opt/cheerp
 
 all: libGLESv2.bc
 
 libGLESv2.bc: webgles.bc webglesutils.bc
-	${DUETTO_PREFIX}/bin/llvm-link -o $@ $^
+	${CHEERP_PREFIX}/bin/llvm-link -o $@ $^
 
 %.bc: %.cpp
-	${DUETTO_PREFIX}/bin/clang -c $^ -o $@ -target duetto
+	${CHEERP_PREFIX}/bin/clang -c $^ -o $@ -target cheerp
 
 install_headers: webgles.h gl2.h
 	mkdir -p ${INSTALL_PREFIX}/include/GLES2/

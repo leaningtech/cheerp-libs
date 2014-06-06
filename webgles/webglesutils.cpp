@@ -19,7 +19,7 @@
  ***************************************************************/
 
 #include "webgles.h"
-#include <duettointrin.h>
+#include <cheerpintrin.h>
 
 client::WebGLRenderingContext* webGLES;
 

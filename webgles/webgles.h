@@ -21,8 +21,8 @@
 #ifndef _WEBGLES_H_
 #define _WEBGLES_H_
 
-#include <duetto/client.h>
-#include <duetto/webgl.h>
+#include <cheerp/client.h>
+#include <cheerp/webgl.h>
 #include "gl2.h"
 extern client::WebGLRenderingContext* webGLES;
 void webGLESInit(const client::String& canvasName);
