@@ -520,7 +520,9 @@ void glStencilOpSeparate(unsigned int face, unsigned int fail, unsigned int zfai
 
 void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* data)
 {
-	client::ArrayBufferView* buf=data?cheerp::MakeArrayBufferView(data):NULL;
+	client::ArrayBufferView* buf=nullptr;
+	if(data)
+		buf = type==GL_UNSIGNED_BYTE ? (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint8Array>(data) : (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint16Array>(data);
 	webGLES->texImage2D(target, level, internalformat, width, height, border, format, type, buf);
 }
 
