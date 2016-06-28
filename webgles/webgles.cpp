@@ -549,7 +549,7 @@ void glUniform1f(unsigned int location, float x)
 void glUniform1fv (GLint location, GLsizei count, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 1*count*4);
-	webGLES->uniform1fv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform1fv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform1i(unsigned int location, int x)
@@ -560,7 +560,7 @@ void glUniform1i(unsigned int location, int x)
 void glUniform1iv (GLint location, GLsizei count, const GLint* value)
 {
 	client::Int32Array* buf=cheerp::MakeTypedArray(value, 1*count*4);
-	webGLES->uniform1iv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform1iv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform2f(unsigned int location, float x, float y)
@@ -571,7 +571,7 @@ void glUniform2f(unsigned int location, float x, float y)
 void glUniform2fv (GLint location, GLsizei count, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 2*count*4);
-	webGLES->uniform2fv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform2fv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform2i(unsigned int location, int x, int y)
@@ -582,7 +582,7 @@ void glUniform2i(unsigned int location, int x, int y)
 void glUniform2iv (GLint location, GLsizei count, const GLint* value)
 {
 	client::Int32Array* buf=cheerp::MakeTypedArray(value, 2*count*4);
-	webGLES->uniform2iv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform2iv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform3f(unsigned int location, float x, float y, float z)
@@ -593,7 +593,7 @@ void glUniform3f(unsigned int location, float x, float y, float z)
 void glUniform3fv (GLint location, GLsizei count, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 3*count*4);
-	webGLES->uniform3fv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform3fv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform3i(unsigned int location, int x, int y, int z)
@@ -604,7 +604,7 @@ void glUniform3i(unsigned int location, int x, int y, int z)
 void glUniform3iv (GLint location, GLsizei count, const GLint* value)
 {
 	client::Int32Array* buf=cheerp::MakeTypedArray(value, 3*count*4);
-	webGLES->uniform3iv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform3iv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform4f(unsigned int location, float x, float y, float z, float w)
@@ -615,7 +615,7 @@ void glUniform4f(unsigned int location, float x, float y, float z, float w)
 void glUniform4fv (GLint location, GLsizei count, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 4*count*4);
-	webGLES->uniform4fv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform4fv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniform4i(unsigned int location, int x, int y, int z, int w)
@@ -626,25 +626,25 @@ void glUniform4i(unsigned int location, int x, int y, int z, int w)
 void glUniform4iv (GLint location, GLsizei count, const GLint* value)
 {
 	client::Int32Array* buf=cheerp::MakeTypedArray(value, 4*count*4);
-	webGLES->uniform4iv(webGLESLookupWebGLUniformLocation(location), buf);
+	webGLES->uniform4iv(webGLESLookupWebGLUniformLocation(location), *buf);
 }
 
 void glUniformMatrix2fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 2*2*count*4);
-	webGLES->uniformMatrix2fv(webGLESLookupWebGLUniformLocation(location), transpose, buf);
+	webGLES->uniformMatrix2fv(webGLESLookupWebGLUniformLocation(location), transpose, *buf);
 }
 
 void glUniformMatrix3fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 3*3*count*4);
-	webGLES->uniformMatrix3fv(webGLESLookupWebGLUniformLocation(location), transpose, buf);
+	webGLES->uniformMatrix3fv(webGLESLookupWebGLUniformLocation(location), transpose, *buf);
 }
 
 void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
 {
 	client::Float32Array* buf=cheerp::MakeTypedArray(value, 4*4*count*4);
-	webGLES->uniformMatrix4fv(webGLESLookupWebGLUniformLocation(location), transpose, buf);
+	webGLES->uniformMatrix4fv(webGLESLookupWebGLUniformLocation(location), transpose, *buf);
 }
 
 void glUseProgram(unsigned int program)
