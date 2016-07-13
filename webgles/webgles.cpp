@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * Copyright (C) 2013-2015 Alessandro Pignotti <alessandro@leaningtech.com>
+ * Copyright (C) 2013-2016 Alessandro Pignotti <alessandro@leaningtech.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -388,6 +388,236 @@ void glGenerateMipmap(unsigned int target)
 int glGetAttribLocation(unsigned int program, const char* name)
 {
 	return webGLES->getAttribLocation(webGLESLookupWebGLProgram(program),name);
+}
+
+void __attribute__((always_inline)) glGetBooleanv (GLenum pname, GLboolean* data)
+ {
+	client::Object* ret = webGLES->getParameter(pname);
+	if(ret==nullptr)
+	{
+		*data = 0;
+		return;
+	}
+	int numElements = 0;
+	switch(pname)
+	{
+		case GL_ARRAY_BUFFER_BINDING:
+		case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+			*data = WebGLBufferArray->indexOf(ret)+1;
+			return;
+		case GL_CURRENT_PROGRAM:
+			*data = WebGLProgramArray->indexOf(ret)+1;
+			return;
+		case GL_FRAMEBUFFER_BINDING:
+			*data = WebGLFramebufferArray->indexOf(ret)+1;
+			return;
+		case GL_RENDERBUFFER_BINDING:
+			*data = WebGLRenderbufferArray->indexOf(ret)+1;
+			return;
+		case GL_TEXTURE_BINDING_2D:
+		case GL_TEXTURE_BINDING_CUBE_MAP:
+			*data = WebGLTextureArray->indexOf(ret)+1;
+			return;
+		case GL_ALIASED_LINE_WIDTH_RANGE:
+		case GL_ALIASED_POINT_SIZE_RANGE:
+		case GL_DEPTH_RANGE:
+		case GL_MAX_VIEWPORT_DIMS:
+			numElements = 2;
+			break;
+		case GL_BLEND_COLOR:
+		case GL_COLOR_CLEAR_VALUE:
+		case GL_COLOR_WRITEMASK:
+		case GL_SCISSOR_BOX:
+		case GL_VIEWPORT:
+			numElements = 4;
+			break;
+		default:
+			break;
+	}
+	if(numElements == 0)
+	{
+		*data = *ret;
+		return;
+	}
+	for(GLsizei i=0;i<numElements;i++)
+	{
+		client::Array& retArray = *(client::Array*)ret;
+		data[i] = *retArray[i];
+	}
+}
+
+void __attribute__((always_inline)) glGetDoublev (GLenum pname, GLdouble* data)
+ {
+	client::Object* ret = webGLES->getParameter(pname);
+	if(ret==nullptr)
+	{
+		*data = 0;
+		return;
+	}
+	int numElements = 0;
+	switch(pname)
+	{
+		case GL_ARRAY_BUFFER_BINDING:
+		case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+			*data = WebGLBufferArray->indexOf(ret)+1;
+			return;
+		case GL_CURRENT_PROGRAM:
+			*data = WebGLProgramArray->indexOf(ret)+1;
+			return;
+		case GL_FRAMEBUFFER_BINDING:
+			*data = WebGLFramebufferArray->indexOf(ret)+1;
+			return;
+		case GL_RENDERBUFFER_BINDING:
+			*data = WebGLRenderbufferArray->indexOf(ret)+1;
+			return;
+		case GL_TEXTURE_BINDING_2D:
+		case GL_TEXTURE_BINDING_CUBE_MAP:
+			*data = WebGLTextureArray->indexOf(ret)+1;
+			return;
+		case GL_ALIASED_LINE_WIDTH_RANGE:
+		case GL_ALIASED_POINT_SIZE_RANGE:
+		case GL_DEPTH_RANGE:
+		case GL_MAX_VIEWPORT_DIMS:
+			numElements = 2;
+			break;
+		case GL_BLEND_COLOR:
+		case GL_COLOR_CLEAR_VALUE:
+		case GL_COLOR_WRITEMASK:
+		case GL_SCISSOR_BOX:
+		case GL_VIEWPORT:
+			numElements = 4;
+			break;
+		default:
+			break;
+	}
+	if(numElements == 0)
+	{
+		*data = *ret;
+		return;
+	}
+	for(GLsizei i=0;i<numElements;i++)
+	{
+		client::Array& retArray = *(client::Array*)ret;
+		data[i] = *retArray[i];
+	}
+}
+
+void __attribute__((always_inline)) glGetFloatv (GLenum pname, GLfloat* data)
+ {
+	client::Object* ret = webGLES->getParameter(pname);
+	if(ret==nullptr)
+	{
+		*data = 0;
+		return;
+	}
+	int numElements = 0;
+	switch(pname)
+	{
+		case GL_ARRAY_BUFFER_BINDING:
+		case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+			*data = WebGLBufferArray->indexOf(ret)+1;
+			return;
+		case GL_CURRENT_PROGRAM:
+			*data = WebGLProgramArray->indexOf(ret)+1;
+			return;
+		case GL_FRAMEBUFFER_BINDING:
+			*data = WebGLFramebufferArray->indexOf(ret)+1;
+			return;
+		case GL_RENDERBUFFER_BINDING:
+			*data = WebGLRenderbufferArray->indexOf(ret)+1;
+			return;
+		case GL_TEXTURE_BINDING_2D:
+		case GL_TEXTURE_BINDING_CUBE_MAP:
+			*data = WebGLTextureArray->indexOf(ret)+1;
+			return;
+		case GL_ALIASED_LINE_WIDTH_RANGE:
+		case GL_ALIASED_POINT_SIZE_RANGE:
+		case GL_DEPTH_RANGE:
+		case GL_MAX_VIEWPORT_DIMS:
+			numElements = 2;
+			break;
+		case GL_BLEND_COLOR:
+		case GL_COLOR_CLEAR_VALUE:
+		case GL_COLOR_WRITEMASK:
+		case GL_SCISSOR_BOX:
+		case GL_VIEWPORT:
+			numElements = 4;
+			break;
+		default:
+			break;
+	}
+	if(numElements == 0)
+	{
+		*data = *ret;
+		return;
+	}
+	for(GLsizei i=0;i<numElements;i++)
+	{
+		client::Array& retArray = *(client::Array*)ret;
+		data[i] = *retArray[i];
+	}
+}
+
+void __attribute__((always_inline)) glGetIntegerv (GLenum pname, GLint* data)
+ {
+	client::Object* ret = webGLES->getParameter(pname);
+	if(ret==nullptr)
+	{
+		*data = 0;
+		return;
+	}
+	int numElements = 0;
+	switch(pname)
+	{
+		case GL_ARRAY_BUFFER_BINDING:
+		case GL_ELEMENT_ARRAY_BUFFER_BINDING:
+			*data = WebGLBufferArray->indexOf(ret)+1;
+			return;
+		case GL_CURRENT_PROGRAM:
+			*data = WebGLProgramArray->indexOf(ret)+1;
+			return;
+		case GL_FRAMEBUFFER_BINDING:
+			*data = WebGLFramebufferArray->indexOf(ret)+1;
+			return;
+		case GL_RENDERBUFFER_BINDING:
+			*data = WebGLRenderbufferArray->indexOf(ret)+1;
+			return;
+		case GL_TEXTURE_BINDING_2D:
+		case GL_TEXTURE_BINDING_CUBE_MAP:
+			*data = WebGLTextureArray->indexOf(ret)+1;
+			return;
+		case GL_ALIASED_LINE_WIDTH_RANGE:
+		case GL_ALIASED_POINT_SIZE_RANGE:
+		case GL_DEPTH_RANGE:
+		case GL_MAX_VIEWPORT_DIMS:
+			numElements = 2;
+			break;
+		case GL_BLEND_COLOR:
+		case GL_COLOR_CLEAR_VALUE:
+		case GL_COLOR_WRITEMASK:
+		case GL_SCISSOR_BOX:
+		case GL_VIEWPORT:
+			numElements = 4;
+			break;
+		default:
+			break;
+	}
+	if(numElements == 0)
+	{
+		*data = *ret;
+		return;
+	}
+	for(GLsizei i=0;i<numElements;i++)
+	{
+		client::Array& retArray = *(client::Array*)ret;
+		data[i] = *retArray[i];
+	}
+}
+
+const GLubyte* glGetString (GLenum pname)
+{
+	client::Object* ret = webGLES->getParameter(pname);
+	return (const GLubyte*)((std::string)*((client::String*)ret)).c_str();
 }
 
 unsigned int glGetError()

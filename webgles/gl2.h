@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * Copyright (C) 2013 Alessandro Pignotti <alessandro@leaningtech.com>
+ * Copyright (C) 2013-2016 Alessandro Pignotti <alessandro@leaningtech.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,6 +38,7 @@ typedef unsigned char	GLubyte;
 typedef unsigned short	GLushort;
 typedef unsigned int	GLuint;
 typedef float	GLfloat;
+typedef double	GLdouble;
 typedef float	GLclampf;
 #define GL_DEPTH_BUFFER_BIT	0x0100
 #define GL_STENCIL_BUFFER_BIT	0x0400
@@ -392,6 +393,11 @@ void glFramebufferTexture2D(unsigned int target, unsigned int attachment, unsign
 void glFrontFace(unsigned int mode);
 void glGenerateMipmap(unsigned int target);
 int glGetAttribLocation(unsigned int program, const char* name);
+void __attribute__((always_inline)) glGetBooleanv (GLenum pname, GLboolean* data);
+void __attribute__((always_inline)) glGetDoublev (GLenum pname, GLdouble* data);
+void __attribute__((always_inline)) glGetFloatv (GLenum pname, GLfloat* data);
+void __attribute__((always_inline)) glGetIntegerv (GLenum pname, GLint* data);
+const GLubyte* glGetString (GLenum pname);
 unsigned int glGetError();
 GLint glGetUniformLocation (GLuint program, const char* name);
 int glGetVertexAttribOffset(unsigned int index, unsigned int pname);
