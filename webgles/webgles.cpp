@@ -768,7 +768,10 @@ void glTexParameteri(unsigned int target, unsigned int pname, int param)
 
 void glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* data)
 {
-	webGLES->texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, cheerp::MakeArrayBufferView(data));
+	client::ArrayBufferView* buf=nullptr;
+	if(data)
+		buf = type==GL_UNSIGNED_BYTE ? (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint8Array>(data) : (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint16Array>(data);
+	webGLES->texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, buf);
 }
 
 void glUniform1f(unsigned int location, float x)
