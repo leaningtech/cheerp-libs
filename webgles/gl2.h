@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * Copyright (C) 2013-2016 Alessandro Pignotti <alessandro@leaningtech.com>
+ * Copyright (C) 2013-2017 Alessandro Pignotti <alessandro@leaningtech.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,8 @@ typedef unsigned int	GLuint;
 typedef float	GLfloat;
 typedef double	GLdouble;
 typedef float	GLclampf;
+typedef char	GLchar;
+typedef void	GLvoid;
 #define GL_DEPTH_BUFFER_BIT	0x0100
 #define GL_STENCIL_BUFFER_BIT	0x0400
 #define GL_COLOR_BUFFER_BIT	0x4000
@@ -50,6 +52,8 @@ typedef float	GLclampf;
 #define GL_TRIANGLES	0x0004
 #define GL_TRIANGLE_STRIP	0x0005
 #define GL_TRIANGLE_FAN	0x0006
+#define GL_FALSE	0x0000
+#define GL_TRUE	0x0001
 #define GL_ZERO	0x0000
 #define GL_ONE	0x0001
 #define GL_SRC_COLOR	0x0300
