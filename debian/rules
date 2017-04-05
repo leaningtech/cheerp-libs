@@ -10,6 +10,8 @@ override_dh_auto_build:
 	make -B -C stdlibs
 
 override_dh_auto_install:
+	mkdir -p $(CURDIR)/debian/cheerp-libs/opt/cheerp/lib/genericjs
+	mkdir -p $(CURDIR)/debian/cheerp-libs/opt/cheerp/lib/asmjs
 	make -C webgles install INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 	make -C stdlibs install INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 	make -C stdlibs install_asmjs INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
