@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * Copyright (C) 2013-2015 Alessandro Pignotti <alessandro@leaningtech.com>
+ * Copyright (C) 2013-2017 Alessandro Pignotti <alessandro@leaningtech.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,7 +25,9 @@
 #include <cheerp/webgl.h>
 #include "gl2.h"
 extern client::WebGLRenderingContext* webGLES;
+extern client::OESVertexArrayObject* webGLESExtVAO;
 void webGLESInit(const client::String& canvasName);
+bool webGLESInitExtVAO();
 client::WebGLProgram* webGLESLookupWebGLProgram(int objId);
 client::WebGLShader* webGLESLookupWebGLShader(int objId);
 client::WebGLBuffer* webGLESLookupWebGLBuffer(int objId);
@@ -33,5 +35,6 @@ client::WebGLFramebuffer* webGLESLookupWebGLFramebuffer(int objId);
 client::WebGLRenderbuffer* webGLESLookupWebGLRenderbuffer(int objId);
 client::WebGLTexture* webGLESLookupWebGLTexture(int objId);
 client::WebGLUniformLocation* webGLESLookupWebGLUniformLocation(int objId);
+client::WebGLVertexArrayOES* webGLESLookupWebGLVertexArrayOES(int objId);
 void webGLESLookupArrayInit();
 #endif

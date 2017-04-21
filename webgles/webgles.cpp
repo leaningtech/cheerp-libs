@@ -1,6 +1,6 @@
 /****************************************************************
  *
- * Copyright (C) 2013-2016 Alessandro Pignotti <alessandro@leaningtech.com>
+ * Copyright (C) 2013-2017 Alessandro Pignotti <alessandro@leaningtech.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,6 +68,13 @@ client::WebGLUniformLocation* webGLESLookupWebGLUniformLocation(int objId)
 	return static_cast<client::WebGLUniformLocation*>((*WebGLUniformLocationArray)[objId-1]);
 }
 
+client::Array* WebGLVertexArrayOESArray;
+
+client::WebGLVertexArrayOES* webGLESLookupWebGLVertexArrayOES(int objId)
+{
+	return static_cast<client::WebGLVertexArrayOES*>((*WebGLVertexArrayOESArray)[objId-1]);
+}
+
 void webGLESLookupArrayInit() {
 	WebGLProgramArray = new client::Array();
 	WebGLShaderArray = new client::Array();
@@ -76,6 +83,7 @@ void webGLESLookupArrayInit() {
 	WebGLRenderbufferArray = new client::Array();
 	WebGLTextureArray = new client::Array();
 	WebGLUniformLocationArray = new client::Array();
+	WebGLVertexArrayOESArray = new client::Array();
 }
 
 void glActiveTexture(unsigned int texture)
@@ -918,5 +926,35 @@ void glVertexAttribPointer(unsigned int indx, int size, unsigned int type, bool 
 void glViewport(int x, int y, int width, int height)
 {
 	return webGLES->viewport(x,y,width,height);
+}
+
+void glGenVertexArraysOES (GLsizei n, GLuint* objs)
+{
+	for(GLsizei i=0;i<n;i++) {
+		client::WebGLVertexArrayOES* obj=webGLESExtVAO->createVertexArrayOES();
+		int index=WebGLVertexArrayOESArray->indexOf(NULL);
+		if(index>=0) { (*WebGLVertexArrayOESArray)[index] = obj; objs[i]=index+1; }
+		else { index=WebGLVertexArrayOESArray->push(obj); objs[i]=index; }
+	}
+}
+
+void glDeleteVertexArraysOES (GLsizei n, GLuint* objs)
+{
+	for(GLsizei i=0;i<n;i++) {
+		int index=objs[i]-1;
+		client::WebGLVertexArrayOES* obj=static_cast<client::WebGLVertexArrayOES*>((*WebGLVertexArrayOESArray)[index]);
+		webGLESExtVAO->deleteVertexArrayOES(obj);
+		(*WebGLVertexArrayOESArray)[index]=NULL;
+	}
+}
+
+bool glIsVertexArrayOES(unsigned int arrayObject)
+{
+	return webGLESExtVAO->isVertexArrayOES(webGLESLookupWebGLVertexArrayOES(arrayObject));
+}
+
+void glBindVertexArrayOES(unsigned int arrayObject)
+{
+	return webGLESExtVAO->bindVertexArrayOES(webGLESLookupWebGLVertexArrayOES(arrayObject));
 }
 

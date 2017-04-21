@@ -22,6 +22,7 @@
 #include <cheerpintrin.h>
 
 client::WebGLRenderingContext* webGLES;
+client::OESVertexArrayObject* webGLESExtVAO;
 
 void webGLESInit(const client::String& canvasName)
 {
@@ -30,4 +31,10 @@ void webGLESInit(const client::String& canvasName)
 	webGLES = static_cast<client::WebGLRenderingContext*>(canvas->getContext("experimental-webgl"));
 	if (webGLES == NULL)
 		client::console.log("Sorry, we looked hard, but no sign of WebGL has been found :(");
+}
+
+bool webGLESInitExtVAO()
+{
+	webGLESExtVAO = static_cast<client::OESVertexArrayObject*>(webGLES->getExtension("OES_vertex_array_object"));
+	return webGLESExtVAO != nullptr;
 }

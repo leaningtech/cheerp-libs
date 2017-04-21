@@ -463,6 +463,11 @@ void glVertexAttrib4f(unsigned int indx, float x, float y, float z, float w);
 void glVertexAttrib4fv (GLuint index, const GLfloat* v);
 void glVertexAttribPointer(unsigned int indx, int size, unsigned int type, bool normalized, int stride, int offset);
 void glViewport(int x, int y, int width, int height);
+#define GL_VERTEX_ARRAY_BINDING_OES	0x85b5
+void glGenVertexArraysOES (GLsizei n, GLuint* objs);
+void glDeleteVertexArraysOES (GLsizei n, GLuint* objs);
+bool glIsVertexArrayOES(unsigned int arrayObject);
+void glBindVertexArrayOES(unsigned int arrayObject);
 #ifdef __cplusplus
 }
 #endif
