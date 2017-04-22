@@ -216,6 +216,7 @@ typedef void	GLvoid;
 #define GL_VENDOR	0x1f00
 #define GL_RENDERER	0x1f01
 #define GL_VERSION	0x1f02
+#define GL_EXTENSIONS	0x1f03
 #define GL_NEAREST	0x2600
 #define GL_LINEAR	0x2601
 #define GL_NEAREST_MIPMAP_NEAREST	0x2700

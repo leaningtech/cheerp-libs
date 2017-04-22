@@ -19,6 +19,7 @@
  ***************************************************************/
 
 #include "webgles.h"
+std::string webGLESExtensions;
 client::Array* WebGLProgramArray;
 
 client::WebGLProgram* webGLESLookupWebGLProgram(int objId)
@@ -624,8 +625,19 @@ void __attribute__((always_inline)) glGetIntegerv (GLenum pname, GLint* data)
 
 const GLubyte* glGetString (GLenum pname)
 {
-	client::Object* ret = webGLES->getParameter(pname);
-	return (const GLubyte*)((std::string)*((client::String*)ret)).c_str();
+	if(pname == GL_EXTENSIONS){
+		if(!webGLESExtensions.empty()) return (const GLubyte*)webGLESExtensions.c_str();
+		const client::TArray<client::String>& exts = *webGLES->getSupportedExtensions();
+		for(uint32_t i=0;i<exts.get_length();i++){
+			if(i>0) webGLESExtensions.push_back(' ');
+			webGLESExtensions += "GL_";
+			webGLESExtensions += (std::string)*exts[i];
+		}
+		return (const GLubyte*)webGLESExtensions.c_str();
+	}else{
+		client::Object* ret = webGLES->getParameter(pname);
+		return (const GLubyte*)((std::string)*((client::String*)ret)).c_str();
+	}
 }
 
 unsigned int glGetError()
