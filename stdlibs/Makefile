@@ -21,7 +21,7 @@ asmjs/libstdlibs.full.bc: ${CHEERP_PREFIX}/lib/asmjs/libc.bc ${CHEERP_PREFIX}/li
 	${CHEERP_PREFIX}/bin/llvm-link $^ -o $@
 
 asmjs/libstdlibs.bc: asmjs/libstdlibs.full.bc
-	${CHEERP_PREFIX}/bin/opt -O3 $^ -o $@
+	${CHEERP_PREFIX}/bin/opt -O3 -PreExecute $^ -o $@
 
 install_asmjs: asmjs
 	cp asmjs/libstdlibs.bc ${INSTALL_PREFIX}/lib/asmjs/libstdlibs.bc
