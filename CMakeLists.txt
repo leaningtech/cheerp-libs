@@ -1,0 +1,19 @@
+# Copyright 2018 Leaning Technologies Ltd. All Rights Reserved.
+
+CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+# Rename as appropiate
+PROJECT (CHEERP_LIBS_ADDONS)
+
+SET(SOURCES cheerpfs.cpp)
+
+ADD_LIBRARY(cheerpFS STATIC ${SOURCES})
+
+IF(NOT DEFINED CHEERP_MODE)
+MESSAGE(FATAL_ERROR "-DCHEERP_MODE is not specified")
+ENDIF()
+
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -cheerp-mode=${CHEERP_MODE}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -cheerp-mode=${CHEERP_MODE}")
+
+INSTALL(TARGETS cheerpFS DESTINATION lib/${CHEERP_MODE}/)
+INSTALL(FILES cheerpfs.h DESTINATION include/)
