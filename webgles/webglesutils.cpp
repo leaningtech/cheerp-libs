@@ -64,3 +64,27 @@ void webGLESShaderSource(GLuint shader, const char* code)
 [[cheerp::wasm]] void wgShaderSourceWasm (GLuint shader, GLsizei count, const char* const *string, const GLint* length) shaderSourceImpl();
 
 [[cheerp::genericjs]] void wgShaderSourceGenericjs (GLuint shader, GLsizei count, const char* const *string, const GLint* length) shaderSourceImpl();
+
+void glGetProgramiv(GLuint program, GLenum pname, GLint *params)
+{
+	if(pname == GL_ACTIVE_UNIFORMS)
+		params[0] = *webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
+	else if(pname == GL_ACTIVE_UNIFORM_MAX_LENGTH)
+		params[0] = 256;
+	else
+		params[0] = -1;
+}
+
+void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name)
+{
+	client::WebGLActiveInfo* info = webGLES->getActiveUniform(webGLESLookupWebGLProgram(program), index);
+	// TODO: bufSize check
+	*length = info->get_name()->get_length();
+	for(GLsizei i=0;i<*length;i++)
+	{
+		name[i] = info->get_name()->charCodeAt(i);
+	}
+	name[*length] = 0;
+	*size = info->get_size();
+	*type = info->get_type();
+}

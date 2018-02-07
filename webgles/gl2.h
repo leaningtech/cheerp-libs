@@ -481,6 +481,8 @@ void glGenVertexArraysOES (GLsizei n, GLuint* objs);
 void glDeleteVertexArraysOES (GLsizei n, GLuint* objs);
 bool glIsVertexArrayOES(unsigned int arrayObject);
 void glBindVertexArrayOES(unsigned int arrayObject);
+void glGetProgramiv(GLuint program, GLenum pname, GLint *params);
+void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 #ifdef __cplusplus
 }
 #endif
