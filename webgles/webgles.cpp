@@ -807,7 +807,17 @@ void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei wid
 {
 	client::ArrayBufferView* buf=nullptr;
 	if(data)
-		buf = type==GL_UNSIGNED_BYTE ? (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint8Array>(data) : (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint16Array>(data);
+	{
+		uint32_t elementSize = 1;
+		if(format == GL_RGBA)
+			elementSize = 4;
+		else if(format == GL_RGB)
+			elementSize = 3;
+		else if(format == GL_LUMINANCE_ALPHA)
+			elementSize = 2;
+		buf = type==GL_UNSIGNED_BYTE ? (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint8Array>(data, width*height*elementSize) :
+						(client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint16Array>(data, width*height*2);
+	}
 	webGLES->texImage2D(target, level, internalformat, width, height, border, format, type, buf);
 }
 
@@ -825,7 +835,17 @@ void glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, 
 {
 	client::ArrayBufferView* buf=nullptr;
 	if(data)
-		buf = type==GL_UNSIGNED_BYTE ? (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint8Array>(data) : (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint16Array>(data);
+	{
+		uint32_t elementSize = 1;
+		if(format == GL_RGBA)
+			elementSize = 4;
+		else if(format == GL_RGB)
+			elementSize = 3;
+		else if(format == GL_LUMINANCE_ALPHA)
+			elementSize = 2;
+		buf = type==GL_UNSIGNED_BYTE ? (client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint8Array>(data, width*height*elementSize) :
+						(client::ArrayBufferView*)cheerp::MakeTypedArray<client::Uint16Array>(data, width*height*2);
+	}
 	webGLES->texSubImage2D(target, level, xoffset, yoffset, width, height, format, type, buf);
 }
 
