@@ -24,17 +24,21 @@
 #include <cheerp/client.h>
 #include <cheerp/webgl.h>
 #include "gl2.h"
-extern client::WebGLRenderingContext* webGLES;
-extern client::OESVertexArrayObject* webGLESExtVAO;
-void webGLESInit(const client::String& canvasName);
-bool webGLESInitExtVAO();
-client::WebGLProgram* webGLESLookupWebGLProgram(int objId);
-client::WebGLShader* webGLESLookupWebGLShader(int objId);
-client::WebGLBuffer* webGLESLookupWebGLBuffer(int objId);
-client::WebGLFramebuffer* webGLESLookupWebGLFramebuffer(int objId);
-client::WebGLRenderbuffer* webGLESLookupWebGLRenderbuffer(int objId);
-client::WebGLTexture* webGLESLookupWebGLTexture(int objId);
-client::WebGLUniformLocation* webGLESLookupWebGLUniformLocation(int objId);
-client::WebGLVertexArrayOES* webGLESLookupWebGLVertexArrayOES(int objId);
-void webGLESLookupArrayInit();
+namespace [[cheerp::genericjs]] client
+{
+	extern client::WebGLRenderingContext* webGLES;
+}
+using client::webGLES;
+[[cheerp::genericjs]] extern client::OESVertexArrayObject* webGLESExtVAO;
+[[cheerp::genericjs]] void webGLESInit(const client::String& canvasName);
+[[cheerp::genericjs]] bool webGLESInitExtVAO();
+[[cheerp::genericjs]] client::WebGLProgram* webGLESLookupWebGLProgram(int objId);
+[[cheerp::genericjs]] client::WebGLShader* webGLESLookupWebGLShader(int objId);
+[[cheerp::genericjs]] client::WebGLBuffer* webGLESLookupWebGLBuffer(int objId);
+[[cheerp::genericjs]] client::WebGLFramebuffer* webGLESLookupWebGLFramebuffer(int objId);
+[[cheerp::genericjs]] client::WebGLRenderbuffer* webGLESLookupWebGLRenderbuffer(int objId);
+[[cheerp::genericjs]] client::WebGLTexture* webGLESLookupWebGLTexture(int objId);
+[[cheerp::genericjs]] client::WebGLUniformLocation* webGLESLookupWebGLUniformLocation(int objId);
+[[cheerp::genericjs]] client::WebGLVertexArrayOES* webGLESLookupWebGLVertexArrayOES(int objId);
+[[cheerp::genericjs]] void webGLESLookupArrayInit();
 #endif

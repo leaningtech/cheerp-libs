@@ -21,7 +21,10 @@
 #include "webgles.h"
 #include <cheerpintrin.h>
 
-client::WebGLRenderingContext* webGLES;
+namespace [[cheerp::genericjs]] client
+{
+	client::WebGLRenderingContext* webGLES = nullptr;
+}
 client::OESVertexArrayObject* webGLESExtVAO;
 
 void webGLESInit(const client::String& canvasName)
