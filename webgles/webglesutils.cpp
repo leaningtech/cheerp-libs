@@ -38,3 +38,29 @@ bool webGLESInitExtVAO()
 	webGLESExtVAO = static_cast<client::OESVertexArrayObject*>(webGLES->getExtension("OES_vertex_array_object"));
 	return webGLESExtVAO != nullptr;
 }
+
+void webGLESShaderSource(GLuint shader, const char* code)
+{
+	client::WebGLShader* s = webGLESLookupWebGLShader(shader);
+	webGLES->shaderSource(s, code);
+}
+
+#define shaderSourceImpl() { \
+	uint32_t fullLen = 0; \
+	for(GLsizei i=0;i<count;i++) \
+		fullLen += length[i]; \
+	char* buf = (char*)malloc(fullLen+1); \
+	buf[fullLen] = 0; \
+	uint32_t offset = 0; \
+	for(GLsizei i=0;i<count;i++) \
+	{ \
+		memcpy(buf + offset, string[i], length[i]); \
+		offset += length[i]; \
+	} \
+	webGLESShaderSource(shader, buf); \
+	free(buf); \
+}
+
+[[cheerp::wasm]] void wgShaderSourceWasm (GLuint shader, GLsizei count, const char* const *string, const GLint* length) shaderSourceImpl();
+
+[[cheerp::genericjs]] void wgShaderSourceGenericjs (GLuint shader, GLsizei count, const char* const *string, const GLint* length) shaderSourceImpl();

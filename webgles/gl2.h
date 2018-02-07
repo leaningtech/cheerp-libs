@@ -428,7 +428,13 @@ void glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum forma
 void glRenderbufferStorage(unsigned int target, unsigned int internalformat, int width, int height);
 void glSampleCoverage(float value, bool invert);
 void glScissor(int x, int y, int width, int height);
-void glShaderSource (GLuint shader, GLsizei count, const char* const *string, const GLint* length);
+[[cheerp::wasm]] void wgShaderSourceWasm (GLuint shader, GLsizei count, const char* const *string, const GLint* length);
+[[cheerp::genericjs]] void wgShaderSourceGenericjs (GLuint shader, GLsizei count, const char* const *string, const GLint* length);
+#if defined(__WASM__) || defined(__ASMJS__)
+[[cheerp::wasm]] inline void glShaderSource (GLuint shader, GLsizei count, const char* const *string, const GLint* length) { return wgShaderSourceWasm(shader, count, string, length); }
+#else
+[[cheerp::genericjs]] inline void glShaderSource (GLuint shader, GLsizei count, const char* const *string, const GLint* length) { return wgShaderSourceGenericjs(shader, count, string, length); }
+#endif
 void glStencilFunc(unsigned int func, int ref, unsigned int mask);
 void glStencilFuncSeparate(unsigned int face, unsigned int func, int ref, unsigned int mask);
 void glStencilMask(unsigned int mask);
