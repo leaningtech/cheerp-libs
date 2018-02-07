@@ -177,6 +177,11 @@ void glClearDepth(float depth)
 	return webGLES->clearDepth(depth);
 }
 
+void glClearDepthf(float depth)
+{
+	return glClearDepth(depth);
+}
+
 void glClearStencil(int s)
 {
 	return webGLES->clearStencil(s);

@@ -363,6 +363,7 @@ unsigned int glCheckFramebufferStatus(unsigned int target);
 void glClear(unsigned int mask);
 void glClearColor(float red, float green, float blue, float alpha);
 void glClearDepth(float depth);
+void glClearDepthf(float depth);
 void glClearStencil(int s);
 void glColorMask(bool red, bool green, bool blue, bool alpha);
 void glCompileShader(unsigned int shader);
