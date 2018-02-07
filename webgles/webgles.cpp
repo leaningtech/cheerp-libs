@@ -19,7 +19,6 @@
  ***************************************************************/
 
 #include "webgles.h"
-std::string webGLESExtensions;
 client::Array* WebGLProgramArray;
 
 client::WebGLProgram* webGLESLookupWebGLProgram(int objId)
@@ -623,21 +622,57 @@ void __attribute__((always_inline)) glGetIntegerv (GLenum pname, GLint* data)
 	}
 }
 
-const GLubyte* glGetString (GLenum pname)
+int getStringImpl(char* buf, bool computeLen, GLenum pname)
 {
 	if(pname == GL_EXTENSIONS){
-		if(!webGLESExtensions.empty()) return (const GLubyte*)webGLESExtensions.c_str();
 		const client::TArray<client::String>& exts = *webGLES->getSupportedExtensions();
+		int totalLen = 0;
 		for(uint32_t i=0;i<exts.get_length();i++){
-			if(i>0) webGLESExtensions.push_back(' ');
-			webGLESExtensions += "GL_";
-			webGLESExtensions += (std::string)*exts[i];
+			totalLen += 4 + exts[i]->get_length();
 		}
-		return (const GLubyte*)webGLESExtensions.c_str();
+		if(computeLen)
+			return totalLen;
+		char* tmp = buf;
+		int usedLen = 0;
+		for(uint32_t i=0;i<exts.get_length();i++){
+			if(i>0) tmp[usedLen++] = ' ';
+			tmp[usedLen++] = 'G';
+			tmp[usedLen++] = 'L';
+			tmp[usedLen++] = '_';
+			for(int j=0;j<exts[i]->get_length();j++)
+				tmp[usedLen++] = exts[i]->charCodeAt(j);
+		}
+		tmp[usedLen++] = 0;
+		assert(usedLen == totalLen);
+		return totalLen;
 	}else{
-		client::Object* ret = webGLES->getParameter(pname);
-		return (const GLubyte*)((std::string)*((client::String*)ret)).c_str();
+		client::String* ret = (client::String*)webGLES->getParameter(pname);
+		int totalLen = ret->get_length();
+		if(computeLen)
+			return totalLen + 1;
+		char* tmp = buf;
+		for(int j=0;j<totalLen;j++)
+			tmp[j] = ret->charCodeAt(j);
+		tmp[totalLen] = 0;
+		return totalLen;
 	}
+}
+
+// TODO: This leaks memory, fix it
+[[cheerp::wasm]] const GLubyte* wgGetStringWasm (GLenum pname)
+{
+	int totalLen = getStringImpl(nullptr, true, pname);
+	char* buf = (char*)malloc(totalLen);
+	getStringImpl(buf, false, pname);
+	return (const GLubyte*)buf;
+}
+
+[[cheerp::genericjs]] const GLubyte* wgGetStringGenericjs (GLenum pname)
+{
+	int totalLen = getStringImpl(nullptr, true, pname);
+	char* buf = (char*)malloc(totalLen);
+	getStringImpl(buf, false, pname);
+	return (const GLubyte*)buf;
 }
 
 unsigned int glGetError()

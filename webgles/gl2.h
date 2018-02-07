@@ -402,7 +402,13 @@ void __attribute__((always_inline)) glGetBooleanv (GLenum pname, GLboolean* data
 void __attribute__((always_inline)) glGetDoublev (GLenum pname, GLdouble* data);
 void __attribute__((always_inline)) glGetFloatv (GLenum pname, GLfloat* data);
 void __attribute__((always_inline)) glGetIntegerv (GLenum pname, GLint* data);
-const GLubyte* glGetString (GLenum pname);
+[[cheerp::wasm]] const GLubyte* wgGetStringWasm (GLenum pname);
+[[cheerp::genericjs]] const GLubyte* wgGetStringGenericjs (GLenum pname);
+#if defined(__WASM__) || defined(__ASMJS__)
+[[cheerp::wasm]] inline const GLubyte* glGetString (GLenum pname) { return wgGetStringWasm(pname); }
+#else
+[[cheerp::genericjs]] inline const GLubyte* glGetString (GLenum pname) { return wgGetStringGenericjs(pname); }
+#endif
 unsigned int glGetError();
 GLint glGetUniformLocation (GLuint program, const char* name);
 int glGetVertexAttribOffset(unsigned int index, unsigned int pname);
