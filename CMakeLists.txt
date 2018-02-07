@@ -17,3 +17,4 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -cheerp-mode=${CHEERP_MODE}")
 
 INSTALL(TARGETS posixcompat emscompat DESTINATION lib/${CHEERP_MODE}/)
 INSTALL(FILES cheerpfs.h emscripten.h DESTINATION include/)
+INSTALL(FILES emscripten/html5.h DESTINATION include/emscripten/)
