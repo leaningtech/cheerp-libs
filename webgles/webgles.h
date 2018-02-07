@@ -30,7 +30,9 @@ namespace [[cheerp::genericjs]] client
 }
 using client::webGLES;
 [[cheerp::genericjs]] extern client::OESVertexArrayObject* webGLESExtVAO;
-[[cheerp::genericjs]] void webGLESInit(const client::String& canvasName);
+enum WEBGLES_OPTIONS { WG_NO_ALPHA = 1, WG_NO_DEPTH = 2, WG_STENCIL = 4 };
+[[cheerp::genericjs]] void webGLESInit(const client::String& canvasName, int options = 0);
+[[cheerp::genericjs]] void webGLESInit(client::HTMLCanvasElement* canvas, int options = 0);
 [[cheerp::genericjs]] bool webGLESInitExtVAO();
 [[cheerp::genericjs]] client::WebGLProgram* webGLESLookupWebGLProgram(int objId);
 [[cheerp::genericjs]] client::WebGLShader* webGLESLookupWebGLShader(int objId);

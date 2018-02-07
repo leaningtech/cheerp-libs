@@ -27,11 +27,27 @@ namespace [[cheerp::genericjs]] client
 }
 client::OESVertexArrayObject* webGLESExtVAO;
 
-void webGLESInit(const client::String& canvasName)
+void webGLESInit(const client::String& canvasName, int options)
+{
+	client::HTMLCanvasElement* canvas = static_cast<client::HTMLCanvasElement*>(client::document.getElementById(canvasName));
+	return webGLESInit(canvas, options);
+}
+
+void webGLESInit(client::HTMLCanvasElement* canvas, int options)
 {
 	webGLESLookupArrayInit();
-	auto canvas = static_cast<client::HTMLCanvasElement*>(client::document.getElementById(canvasName));
-	webGLES = static_cast<client::WebGLRenderingContext*>(canvas->getContext("experimental-webgl"));
+	client::WebGLContextAttributes* optObj = nullptr;
+	if(options)
+	{
+		optObj = new client::WebGLContextAttributes();
+		if(options & WG_NO_ALPHA)
+			optObj->set_alpha(0);
+		if(options & WG_NO_DEPTH)
+			optObj->set_depth(0);
+		if(options & WG_STENCIL)
+			optObj->set_stencil(1);
+	}
+	webGLES = static_cast<client::WebGLRenderingContext*>(canvas->getContext("experimental-webgl", optObj));
 	if (webGLES == NULL)
 		client::console.log("Sorry, we looked hard, but no sign of WebGL has been found :(");
 }
