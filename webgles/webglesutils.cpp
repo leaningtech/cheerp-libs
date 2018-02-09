@@ -84,14 +84,53 @@ void webGLESShaderSource(GLuint shader, const char* code)
 
 [[cheerp::genericjs]] void wgShaderSourceGenericjs (GLuint shader, GLsizei count, const char* const *string, const GLint* length) shaderSourceImpl();
 
+void glGetShaderiv(GLuint shader, GLenum pname, GLint *params)
+{
+	if(pname == GL_INFO_LOG_LENGTH)
+	{
+		client::String* info = webGLES->getShaderInfoLog(webGLESLookupWebGLShader(shader));
+		params[0] = info == nullptr ? 0 : info->get_length() + 1;
+	}
+	else if(pname == GL_SHADER_SOURCE_LENGTH)
+	{
+		client::String* info = webGLES->getShaderSource(webGLESLookupWebGLShader(shader));
+		params[0] = info == nullptr ? 0 : info->get_length() + 1;
+	}
+	else
+		params[0] = *webGLES->getShaderParameter(webGLESLookupWebGLShader(shader), pname);
+}
+
+void glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog)
+{
+	client::String* info = webGLES->getShaderInfoLog(webGLESLookupWebGLShader(shader));
+	if(info == nullptr)
+	{
+		if(length)
+			*length = 0;
+		infoLog[0] = 0;
+		return;
+	}
+	int strLen = info->get_length() + 1;
+	if(strLen > maxLength)
+		strLen = maxLength;
+	for(int i=0;i<strLen - 1;i++)
+		infoLog[i] = info->charCodeAt(i);
+	infoLog[strLen - 1] = 0;
+	if(length)
+		*length = strLen - 1;
+}
+
 void glGetProgramiv(GLuint program, GLenum pname, GLint *params)
 {
-	if(pname == GL_ACTIVE_UNIFORMS)
-		params[0] = *webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
-	else if(pname == GL_ACTIVE_UNIFORM_MAX_LENGTH)
+	if(pname == GL_ACTIVE_UNIFORM_MAX_LENGTH || pname == GL_ACTIVE_ATTRIBUTE_MAX_LENGTH)
 		params[0] = 256;
+	else if(pname == GL_INFO_LOG_LENGTH)
+	{
+		client::String* info = webGLES->getProgramInfoLog(webGLESLookupWebGLProgram(program));
+		params[0] = info == nullptr ? 0 : info->get_length() + 1;
+	}
 	else
-		params[0] = -1;
+		params[0] = *webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
 }
 
 void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name)
