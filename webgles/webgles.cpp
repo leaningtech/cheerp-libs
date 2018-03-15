@@ -211,7 +211,7 @@ void glGenBuffers (GLsizei n, GLuint* objs)
 {
 	for(GLsizei i=0;i<n;i++) {
 		client::WebGLBuffer* obj=webGLES->createBuffer();
-		int index=WebGLBufferArray->indexOf(NULL);
+		int index=WebGLBufferArray->indexOf(nullptr);
 		if(index>=0) { (*WebGLBufferArray)[index] = obj; objs[i]=index+1; }
 		else { index=WebGLBufferArray->push(obj); objs[i]=index; }
 	}
@@ -221,7 +221,7 @@ void glGenFramebuffers (GLsizei n, GLuint* objs)
 {
 	for(GLsizei i=0;i<n;i++) {
 		client::WebGLFramebuffer* obj=webGLES->createFramebuffer();
-		int index=WebGLFramebufferArray->indexOf(NULL);
+		int index=WebGLFramebufferArray->indexOf(nullptr);
 		if(index>=0) { (*WebGLFramebufferArray)[index] = obj; objs[i]=index+1; }
 		else { index=WebGLFramebufferArray->push(obj); objs[i]=index; }
 	}
@@ -230,7 +230,7 @@ void glGenFramebuffers (GLsizei n, GLuint* objs)
 GLuint glCreateProgram ()
 {
 	client::WebGLProgram* obj=webGLES->createProgram();
-	int index=WebGLProgramArray->indexOf(NULL);
+	int index=WebGLProgramArray->indexOf(nullptr);
 	if(index>=0) { (*WebGLProgramArray)[index] = obj; return index+1; }
 	else { index=WebGLProgramArray->push(obj); return index; }
 }
@@ -239,7 +239,7 @@ void glGenRenderbuffers (GLsizei n, GLuint* objs)
 {
 	for(GLsizei i=0;i<n;i++) {
 		client::WebGLRenderbuffer* obj=webGLES->createRenderbuffer();
-		int index=WebGLRenderbufferArray->indexOf(NULL);
+		int index=WebGLRenderbufferArray->indexOf(nullptr);
 		if(index>=0) { (*WebGLRenderbufferArray)[index] = obj; objs[i]=index+1; }
 		else { index=WebGLRenderbufferArray->push(obj); objs[i]=index; }
 	}
@@ -248,7 +248,7 @@ void glGenRenderbuffers (GLsizei n, GLuint* objs)
 GLuint glCreateShader (GLenum shaderType)
 {
 	client::WebGLShader* obj=webGLES->createShader(shaderType);
-	int index=WebGLShaderArray->indexOf(NULL);
+	int index=WebGLShaderArray->indexOf(nullptr);
 	if(index>=0) { (*WebGLShaderArray)[index] = obj; return index+1; }
 	else { index=WebGLShaderArray->push(obj); return index; }
 }
@@ -257,7 +257,7 @@ void glGenTextures (GLsizei n, GLuint* objs)
 {
 	for(GLsizei i=0;i<n;i++) {
 		client::WebGLTexture* obj=webGLES->createTexture();
-		int index=WebGLTextureArray->indexOf(NULL);
+		int index=WebGLTextureArray->indexOf(nullptr);
 		if(index>=0) { (*WebGLTextureArray)[index] = obj; objs[i]=index+1; }
 		else { index=WebGLTextureArray->push(obj); objs[i]=index; }
 	}
@@ -1004,7 +1004,7 @@ void glGenVertexArraysOES (GLsizei n, GLuint* objs)
 {
 	for(GLsizei i=0;i<n;i++) {
 		client::WebGLVertexArrayOES* obj=webGLESExtVAO->createVertexArrayOES();
-		int index=WebGLVertexArrayOESArray->indexOf(NULL);
+		int index=WebGLVertexArrayOESArray->indexOf(nullptr);
 		if(index>=0) { (*WebGLVertexArrayOESArray)[index] = obj; objs[i]=index+1; }
 		else { index=WebGLVertexArrayOESArray->push(obj); objs[i]=index; }
 	}
