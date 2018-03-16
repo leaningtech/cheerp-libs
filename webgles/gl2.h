@@ -498,6 +498,8 @@ void glGetShaderPrecisionFormat(GLenum sType, GLenum pType, GLint* range, GLint*
 void glGetTexParameteriv(GLenum target, GLenum pname, GLint* data);
 void glGetUniformfv(GLuint program, GLint location, GLfloat* data);
 void glGetUniformiv(GLuint program, GLint location, GLint* data);
+void glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* data);
+void glGetVertexAttribiv(GLuint index, GLenum pname, GLint* data);
 #ifdef __cplusplus
 }
 #endif

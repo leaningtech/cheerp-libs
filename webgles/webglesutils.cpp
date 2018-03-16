@@ -27,6 +27,7 @@ namespace [[cheerp::genericjs]] client
 }
 client::OESVertexArrayObject* webGLESExtVAO;
 
+extern client::Array* WebGLBufferArray;
 extern client::Array* WebGLRenderbufferArray;
 extern client::Array* WebGLShaderArray;
 extern client::Array* WebGLTextureArray;
@@ -269,4 +270,21 @@ void glGetUniformiv(GLuint program, GLint location, GLint* data)
 		// Value
 		data[0] = (int)*ret;
 	}
+}
+
+void glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* data)
+{
+	// We only expect to be here for GL_CURRENT_VERTEX_ATTRIB
+	client::Float32Array* ret = (client::Float32Array*)webGLES->getVertexAttrib(index, pname);
+	for(int i=0;i<4;i++)
+		data[i] = (*ret)[i];
+}
+
+void glGetVertexAttribiv(GLuint index, GLenum pname, GLint* data)
+{
+	client::Object* ret = webGLES->getVertexAttrib(index, pname);
+	if(pname == GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)
+		data[0] = WebGLBufferArray->indexOf(ret) + 1;
+	else
+		data[0] = (int)*ret;
 }
