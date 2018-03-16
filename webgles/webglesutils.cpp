@@ -27,6 +27,8 @@ namespace [[cheerp::genericjs]] client
 }
 client::OESVertexArrayObject* webGLESExtVAO;
 
+extern client::Array* WebGLShaderArray;
+
 void webGLESInit(const client::String& canvasName, int options)
 {
 	client::HTMLCanvasElement* canvas = static_cast<client::HTMLCanvasElement*>(client::document.getElementById(canvasName));
@@ -159,4 +161,17 @@ void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *
 	name[*length] = 0;
 	*size = info->get_size();
 	*type = info->get_type();
+}
+
+void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* shaders)
+{
+	auto shadersArray = webGLES->getAttachedShaders(webGLESLookupWebGLProgram(program));
+	int realMax = max > shadersArray->get_length() ? shadersArray->get_length() : max;
+	for(int i=0;i<realMax;i++)
+	{
+		int index=WebGLShaderArray->indexOf((*shadersArray)[i]);
+		shaders[i] = index+1;
+	}
+	if(count)
+		*count = realMax;
 }
