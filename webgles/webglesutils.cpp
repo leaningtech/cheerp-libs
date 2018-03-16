@@ -27,7 +27,9 @@ namespace [[cheerp::genericjs]] client
 }
 client::OESVertexArrayObject* webGLESExtVAO;
 
+extern client::Array* WebGLRenderbufferArray;
 extern client::Array* WebGLShaderArray;
+extern client::Array* WebGLTextureArray;
 
 void webGLESInit(const client::String& canvasName, int options)
 {
@@ -179,4 +181,18 @@ void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* s
 void glGetBufferParameteriv(GLenum target, GLenum value, GLint* data)
 {
 	data[0] = (int)*webGLES->getBufferParameter(target, value);
+}
+
+void glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* data)
+{
+	client::Object* ret = webGLES->getFramebufferAttachmentParameter(target, attachment, pname);
+	if(pname == GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME)
+	{
+		int index = WebGLTextureArray->indexOf(ret);
+		if(index < 0)
+			index = WebGLRenderbufferArray->indexOf(ret);
+		data[0] = index+1;
+	}
+	else
+		data[0] = (int)*ret;
 }
