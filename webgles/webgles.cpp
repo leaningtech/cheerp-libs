@@ -663,20 +663,53 @@ int getStringImpl(char* buf, bool computeLen, GLenum pname)
 	}
 }
 
-// TODO: This leaks memory, fix it
 [[cheerp::wasm]] const GLubyte* wgGetStringWasm (GLenum pname)
 {
+	static char* cachedStrings[5];
+	int cachedPos = -1;
+	if(pname == GL_VENDOR)
+		cachedPos = 0;
+	else if(pname == GL_RENDERER)
+		cachedPos = 1;
+	else if(pname == GL_VERSION)
+		cachedPos = 2;
+	else if(pname == GL_SHADING_LANGUAGE_VERSION)
+		cachedPos = 3;
+	else if(pname == GL_EXTENSIONS)
+		cachedPos = 4;
+	else
+		return NULL;
+	if(cachedStrings[cachedPos])
+		return (const GLubyte*)cachedStrings[cachedPos];
 	int totalLen = getStringImpl(nullptr, true, pname);
 	char* buf = (char*)malloc(totalLen);
 	getStringImpl(buf, false, pname);
+	cachedStrings[cachedPos] = buf;
 	return (const GLubyte*)buf;
 }
 
 [[cheerp::genericjs]] const GLubyte* wgGetStringGenericjs (GLenum pname)
 {
+	static char* cachedStrings[5];
+	int cachedPos = -1;
+	if(pname == GL_VENDOR)
+		cachedPos = 0;
+	else if(pname == GL_RENDERER)
+		cachedPos = 1;
+	else if(pname == GL_VERSION)
+		cachedPos = 2;
+	else if(pname == GL_SHADING_LANGUAGE_VERSION)
+		cachedPos = 3;
+	else if(pname == GL_EXTENSIONS)
+		cachedPos = 4;
+	else
+		return NULL;
+	if(cachedStrings[cachedPos])
+		return (const GLubyte*)cachedStrings[cachedPos];
 	int totalLen = getStringImpl(nullptr, true, pname);
 	char* buf = (char*)malloc(totalLen);
 	getStringImpl(buf, false, pname);
+	cachedStrings[cachedPos] = buf;
 	return (const GLubyte*)buf;
 }
 
