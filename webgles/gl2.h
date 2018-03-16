@@ -490,6 +490,7 @@ void glGetProgramiv(GLuint program, GLenum pname, GLint *params);
 void glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* shaders);
+void glGetBufferParameteriv(GLenum target, GLenum value, GLint* data);
 #ifdef __cplusplus
 }
 #endif

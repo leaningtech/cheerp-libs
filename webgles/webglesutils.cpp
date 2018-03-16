@@ -175,3 +175,8 @@ void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* s
 	if(count)
 		*count = realMax;
 }
+
+void glGetBufferParameteriv(GLenum target, GLenum value, GLint* data)
+{
+	data[0] = (int)*webGLES->getBufferParameter(target, value);
+}
