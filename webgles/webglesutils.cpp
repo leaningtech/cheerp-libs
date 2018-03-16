@@ -133,6 +133,20 @@ void glGetProgramiv(GLuint program, GLenum pname, GLint *params)
 		params[0] = *webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
 }
 
+void glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name)
+{
+	client::WebGLActiveInfo* info = webGLES->getActiveAttrib(webGLESLookupWebGLProgram(program), index);
+	// TODO: bufSize check
+	*length = info->get_name()->get_length();
+	for(GLsizei i=0;i<*length;i++)
+	{
+		name[i] = info->get_name()->charCodeAt(i);
+	}
+	name[*length] = 0;
+	*size = info->get_size();
+	*type = info->get_type();
+}
+
 void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name)
 {
 	client::WebGLActiveInfo* info = webGLES->getActiveUniform(webGLESLookupWebGLProgram(program), index);
