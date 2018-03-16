@@ -229,3 +229,8 @@ void glGetShaderPrecisionFormat(GLenum sType, GLenum pType, GLint* range, GLint*
 	range[1] = format->get_rangeMax();
 	prec[0] = format->get_precision();
 }
+
+void glGetTexParameteriv(GLenum target, GLenum pname, GLint* data)
+{
+	data[0] = (int)*webGLES->getTexParameter(target, pname);
+}
