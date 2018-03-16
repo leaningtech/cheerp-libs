@@ -487,6 +487,7 @@ void glBindVertexArrayOES(unsigned int arrayObject);
 void glGetShaderiv(GLuint shader, GLenum pname, GLint *params);
 void glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
 void glGetProgramiv(GLuint program, GLenum pname, GLint *params);
+void glGetProgramInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog);
 void glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
 void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* shaders);

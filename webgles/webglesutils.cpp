@@ -137,6 +137,26 @@ void glGetProgramiv(GLuint program, GLenum pname, GLint *params)
 		params[0] = *webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
 }
 
+void glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei* length, GLchar* infoLog)
+{
+	client::String* info = webGLES->getProgramInfoLog(webGLESLookupWebGLProgram(program));
+	if(info == nullptr)
+	{
+		if(length)
+			*length = 0;
+		infoLog[0] = 0;
+		return;
+	}
+	int strLen = info->get_length() + 1;
+	if(strLen > maxLength)
+		strLen = maxLength;
+	for(int i=0;i<strLen - 1;i++)
+		infoLog[i] = info->charCodeAt(i);
+	infoLog[strLen - 1] = 0;
+	if(length)
+		*length = strLen - 1;
+}
+
 void glGetActiveAttrib(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name)
 {
 	client::WebGLActiveInfo* info = webGLES->getActiveAttrib(webGLESLookupWebGLProgram(program), index);
