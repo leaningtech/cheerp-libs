@@ -21,6 +21,8 @@
 #ifndef _GL2_H_
 #define _GL2_H_
 
+#define GL_ES_VERSION_2_0 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
