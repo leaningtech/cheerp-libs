@@ -496,6 +496,8 @@ void glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLe
 void glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* data);
 void glGetShaderPrecisionFormat(GLenum sType, GLenum pType, GLint* range, GLint* prec);
 void glGetTexParameteriv(GLenum target, GLenum pname, GLint* data);
+void glGetUniformfv(GLuint program, GLint location, GLfloat* data);
+void glGetUniformiv(GLuint program, GLint location, GLint* data);
 #ifdef __cplusplus
 }
 #endif

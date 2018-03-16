@@ -234,3 +234,39 @@ void glGetTexParameteriv(GLenum target, GLenum pname, GLint* data)
 {
 	data[0] = (int)*webGLES->getTexParameter(target, pname);
 }
+
+void glGetUniformfv(GLuint program, GLint location, GLfloat* data)
+{
+	client::Object* ret = webGLES->getUniform(webGLESLookupWebGLProgram(program), webGLESLookupWebGLUniformLocation(location));
+	// We assume the user knows that this uniform is either a float or an array or float
+	if(ret->hasOwnProperty("0"))
+	{
+		// Array or typed array
+		client::Array* a = (client::Array*)ret;
+		for(int i=0;i<a->get_length();i++)
+			data[i] = (double)*((*a)[i]);
+	}
+	else
+	{
+		// Value
+		data[0] = (double)*ret;
+	}
+}
+
+void glGetUniformiv(GLuint program, GLint location, GLint* data)
+{
+	client::Object* ret = webGLES->getUniform(webGLESLookupWebGLProgram(program), webGLESLookupWebGLUniformLocation(location));
+	// We assume the user knows that this uniform is either a float or an array or float
+	if(ret->hasOwnProperty("0"))
+	{
+		// Array or typed array
+		client::Array* a = (client::Array*)ret;
+		for(int i=0;i<a->get_length();i++)
+			data[i] = (int)*((*a)[i]);
+	}
+	else
+	{
+		// Value
+		data[0] = (int)*ret;
+	}
+}
