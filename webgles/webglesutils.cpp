@@ -216,3 +216,8 @@ void glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLe
 	else
 		data[0] = (int)*ret;
 }
+
+void glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* data)
+{
+	data[0] = (int)*webGLES->getRenderbufferParameter(target, pname);
+}

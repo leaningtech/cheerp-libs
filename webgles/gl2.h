@@ -493,6 +493,7 @@ void glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *
 void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* shaders);
 void glGetBufferParameteriv(GLenum target, GLenum value, GLint* data);
 void glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* data);
+void glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* data);
 #ifdef __cplusplus
 }
 #endif
