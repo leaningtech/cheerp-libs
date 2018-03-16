@@ -494,6 +494,7 @@ void glGetAttachedShaders(GLuint program, GLsizei max, GLsizei* count, GLuint* s
 void glGetBufferParameteriv(GLenum target, GLenum value, GLint* data);
 void glGetFramebufferAttachmentParameteriv(GLenum target, GLenum attachment, GLenum pname, GLint* data);
 void glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* data);
+void glGetShaderPrecisionFormat(GLenum sType, GLenum pType, GLint* range, GLint* prec);
 #ifdef __cplusplus
 }
 #endif

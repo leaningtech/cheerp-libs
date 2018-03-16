@@ -221,3 +221,11 @@ void glGetRenderbufferParameteriv(GLenum target, GLenum pname, GLint* data)
 {
 	data[0] = (int)*webGLES->getRenderbufferParameter(target, pname);
 }
+
+void glGetShaderPrecisionFormat(GLenum sType, GLenum pType, GLint* range, GLint* prec)
+{
+	client::WebGLShaderPrecisionFormat* format = webGLES->getShaderPrecisionFormat(sType, pType);
+	range[0] = format->get_rangeMin();
+	range[1] = format->get_rangeMax();
+	prec[0] = format->get_precision();
+}
