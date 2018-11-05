@@ -31,5 +31,6 @@ ADD_LIBRARY(memprof STATIC ${MEMPROF_SOURCES})
 TARGET_COMPILE_OPTIONS(memprof PUBLIC -cheerp-mode=genericjs)
 
 INSTALL(TARGETS memprof DESTINATION lib/${CHEERP_MODE}/)
+INSTALL(FILES memprof.h DESTINATION include/client/cheerp/)
 
 ENDIF()
