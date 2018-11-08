@@ -193,9 +193,95 @@ private:
 	{
 		return timestampManager.getCurrentTimestamp();
 	}
+	class StackTraceParsing
+	{
+	public:
+		StackTraceParsing(client::String *s) : linesParsed(1), representation(s), parsed(false)
+		{
+			parse();
+		}
+		client::String* getRepresentation()
+		{
+			return representation;
+		}
+		client::TArray<client::String> *getStackTrace()
+		{
+			return stackTrace;
+		}
+	private:
+		client::String *parseLine(const client::String *str, const client::String *separator, const int blocks, const int index)
+		{
+			client::TArray<client::String> *B = str->split(separator);
+			if (B->get_length() != blocks || index >= blocks)
+				return new client::String("");
+			return (*B)[index];
+		}
+		void parseStackTrace(const client::String *separator, const int blocks, const int index)
+		{
+			client::TArray<client::String> *A = representation->split("\n");
+			for (int i=0; i<A->get_length(); i++)
+			{
+				(*A)[i] = parseLine((*A)[i], separator, blocks, index);
+			}
+			int score = 0;
+			for (int i=0; i<A->get_length() && (*A)[i]->get_length(); i++)
+			{
+				score++;
+			}
+			if (score > linesParsed)
+			{
+				linesParsed = score;
+				while (A->get_length() > linesParsed)
+				{
+					A->pop();
+				}
+				stackTrace = A;
+				parsed = true;
+			}
+		}
+		bool isParsed()
+		{
+			return parsed;
+		}
+		void parse()
+		{
+			//Chrome-like stack trace
+			parseStackTrace(client::String::fromCharCode(' '), 7, 5);
+
+			//Firefox-like stack trace
+			parseStackTrace(client::String::fromCharCode('@'), 2, 0);
+			
+			if (!isParsed())
+				return;
+			int indexMalloc = -1;
+			for (int i = 0; i<stackTrace->get_length(); i++)
+			{
+				if (((*stackTrace)[i])->search("_malloc") >= 0)
+				{
+					indexMalloc = i;
+					break;
+				}
+			}
+			representation = new client::String("");
+			if (indexMalloc == -1)
+				representation = new client::String("Reccomended: flag -cheerp-pretty-code\n");
+			for (int i = indexMalloc+1; i<stackTrace->get_length(); i++)
+			{
+				if (i > indexMalloc+1) representation = representation->concat("\n");
+				representation = representation->concat("@")->concat(*(*stackTrace)[i]);
+			}
+		}
+	private:
+		client::String *representation;
+		client::TArray<client::String> *stackTrace;
+		int linesParsed;
+		bool parsed;
+	};
+
 	static client::String *prettyStack(client::String *s)
 	{
-		return s;
+		StackTraceParsing stackTraceParsing(s);
+		return stackTraceParsing.getRepresentation();
 	}
  	static void logMemoryBlock(AllocationData *d, uintptr_t p)
 	{
