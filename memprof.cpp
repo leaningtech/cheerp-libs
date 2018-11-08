@@ -120,6 +120,23 @@ class CheerpAllocationsTracker
 	}
 
 public:
+	static client::TArray<client::Object*>* liveAllocations()
+	{
+		static client::TArray<client::Object *>* allocations;
+		allocations = new client::TArray<client::Object*>;
+		
+		instance()->allocatedMemory->forEach(cheerp::Callback([](AllocationData *d, uintptr_t ptr)
+			{
+			size_t size = d->dim;
+			uintptr_t address = ptr;
+			StackTraceParsing stackTraceParsing(d->stackTrace);
+			client::TArray<client::String>* stackTrace = stackTraceParsing.getStackTrace();
+			client::Object* composite = CHEERP_OBJECT(size, address, stackTrace);
+			allocations->push(composite);
+			}
+			));
+		return allocations;
+	}
 	static void statusTracking(int tracker_descriptor)
 	{
 		CheerpAllocationsTracker::instance()->statusTracking_(tracker_descriptor);
@@ -253,23 +270,23 @@ private:
 			
 			if (!isParsed())
 				return;
-			int indexMalloc = -1;
+			int mallocRow = -1;
 			for (int i = 0; i<stackTrace->get_length(); i++)
 			{
-				if (((*stackTrace)[i])->search("_malloc") >= 0)
+				if (((*stackTrace)[i])->indexOf("_malloc") >= 0)
 				{
-					indexMalloc = i;
+					mallocRow = i;
 					break;
 				}
 			}
 			representation = new client::String("");
-			if (indexMalloc == -1)
-				representation = new client::String("Reccomended: flag -cheerp-pretty-code\n");
-			for (int i = indexMalloc+1; i<stackTrace->get_length(); i++)
+			if (mallocRow == -1)
+				representation = new client::String("\nReccomended: flag -cheerp-pretty-code");
+			for (int i = mallocRow+1; i<stackTrace->get_length(); i++)
 			{
-				if (i > indexMalloc+1) representation = representation->concat("\n");
-				representation = representation->concat("@")->concat(*(*stackTrace)[i]);
+				representation = representation->concat("\n@")->concat(*(*stackTrace)[i]);
 			}
+			representation = representation->substring(1);
 		}
 	private:
 		client::String *representation;
@@ -287,7 +304,7 @@ private:
 	{
 		client::String *s = new client::String("Address : ");
 		s = s->concat(integerBaseToString(p, 16, 8));
-		s = s->concat("\t\tDimension : ");
+		s = s->concat("\t\tSize : ");
 		s = s->concat(integerBaseToString(d->dim, 10, 1)->padStart(8));
 		s = s->concat("\n");
 		s = s->concat(prettyStack(d->stackTrace));
@@ -297,6 +314,23 @@ private:
 	client::TMap <uintptr_t, AllocationData*>* allocatedMemory;
 	size_t totalMemoryAllocated;
 	static TimestampManager timestampManager;
+};
+
+class [[cheerp::jsexport]] [[cheerp::genericjs]] CheerpJsMemProf
+{
+private:
+public:
+        CheerpJsMemProf()
+        {
+        }
+	client::TArray<client::Object*>* liveAllocations()
+	{
+		return CheerpAllocationsTracker::liveAllocations();
+	}
+        size_t totalLiveMemory()
+        {
+		return CheerpAllocationsTracker::totalLiveMemory();
+        }
 };
 
 [[cheerp::wasm]] CHEERP_MEMPROF_TAG cheerpMemProfAnnotate(const char *tag_name)

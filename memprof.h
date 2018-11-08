@@ -1,4 +1,6 @@
 // Copyright 2018 Leaning Technologies Ltd. All Rights Reserved.
+#ifndef CHEERP_MEMPROF
+#define CHEERP_MEMPROF
 
 #include <sys/types.h>
 typedef int CHEERP_MEMPROF_TAG;
@@ -14,4 +16,6 @@ extern "C"
 	__attribute__((cheerp_wasm)) size_t cheerpMemProfTotalUsed();
 #ifdef __cplusplus
 }
+#endif
+
 #endif
