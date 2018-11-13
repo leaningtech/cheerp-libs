@@ -30,7 +30,7 @@ class CheerpAllocationsTracker
 	};
 	CheerpAllocationsTracker()
 	{
-	       	nameTags = new client::TMap<CHEERP_MEMPROF_TAG, client::String*>;
+		nameTags = new client::TMap<CHEERP_MEMPROF_TAG, client::String*>;
 		allocatedMemory = new client::TMap<uintptr_t, AllocationData*>;
 		totalMemoryAllocated = 0;
 	}
@@ -124,7 +124,7 @@ public:
 	{
 		static client::TArray<client::Object *>* allocations;
 		allocations = new client::TArray<client::Object*>;
-		
+
 		instance()->allocatedMemory->forEach(cheerp::Callback([](AllocationData *d, uintptr_t ptr)
 			{
 			size_t size = d->dim;
@@ -164,7 +164,7 @@ public:
 
 	static void registerAlloc(uintptr_t ptr, uintptr_t size)
 	{
-		client::String* s = CheerpAllocationsTracker::getStackTrace(); 
+		client::String* s = CheerpAllocationsTracker::getStackTrace();
 		CheerpAllocationsTracker::instance()->registerAlloc_(ptr, size, s);
 	}
 
@@ -267,7 +267,7 @@ private:
 
 			//Firefox-like stack trace
 			parseStackTrace(client::String::fromCharCode('@'), 2, 0);
-			
+
 			if (!isParsed())
 				return;
 			int mallocRow = -1;
@@ -279,10 +279,12 @@ private:
 					break;
 				}
 			}
+			stackTrace->splice(0, mallocRow + 1);
+
 			representation = new client::String("");
 			if (mallocRow == -1)
-				representation = new client::String("\nReccomended: flag -cheerp-pretty-code");
-			for (int i = mallocRow+1; i<stackTrace->get_length(); i++)
+				representation = new client::String("\nRecommended: flag -cheerp-pretty-code");
+			for (int i = 0; i<stackTrace->get_length(); i++)
 			{
 				representation = representation->concat("\n@")->concat(*(*stackTrace)[i]);
 			}
@@ -300,7 +302,7 @@ private:
 		StackTraceParsing stackTraceParsing(s);
 		return stackTraceParsing.getRepresentation();
 	}
- 	static void logMemoryBlock(AllocationData *d, uintptr_t p)
+	static void logMemoryBlock(AllocationData *d, uintptr_t p)
 	{
 		client::String *s = new client::String("Address : ");
 		s = s->concat(integerBaseToString(p, 16, 8));
@@ -316,21 +318,21 @@ private:
 	static TimestampManager timestampManager;
 };
 
-class [[cheerp::jsexport]] [[cheerp::genericjs]] CheerpJsMemProf
+class [[cheerp::jsexport]] [[cheerp::genericjs]] CheerpMemProf
 {
 private:
 public:
-        CheerpJsMemProf()
-        {
-        }
+	CheerpMemProf()
+	{
+	}
 	client::TArray<client::Object*>* liveAllocations()
 	{
 		return CheerpAllocationsTracker::liveAllocations();
 	}
-        size_t totalLiveMemory()
-        {
+	size_t totalLiveMemory()
+	{
 		return CheerpAllocationsTracker::totalLiveMemory();
-        }
+	}
 };
 
 [[cheerp::wasm]] CHEERP_MEMPROF_TAG cheerpMemProfAnnotate(const char *tag_name)

@@ -33,4 +33,10 @@ TARGET_COMPILE_OPTIONS(memprof PUBLIC -cheerp-mode=genericjs)
 INSTALL(TARGETS memprof DESTINATION lib/${CHEERP_MODE}/)
 INSTALL(FILES memprof.h DESTINATION include/client/cheerp/)
 
+SET(MEMPROFUI_SOURCES memprofui.cpp)
+
+ADD_EXECUTABLE(memprofui ${MEMPROFUI_SOURCES})
+
+TARGET_COMPILE_OPTIONS(memprofui PUBLIC -cheerp-mode=genericjs)
+
 ENDIF()
