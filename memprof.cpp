@@ -2,7 +2,7 @@
 
 #include <cheerp/client.h>
 #include <cheerp/types.h>
-#include <cheerp/memprof.h>
+#include "memprof.h"
 
 extern "C"
 {
