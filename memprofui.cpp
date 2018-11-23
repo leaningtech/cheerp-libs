@@ -74,11 +74,11 @@ private:
 		}
 	}
 public:
-	constexpr int heightLine(2);
-	constexpr int heightGraph(130);
-	constexpr int marginWidth(10);
-	constexpr int textBaseLine(heightGraph + marginWidth * 1.6);
-	constexpr double barProportions(0.65);
+	static constexpr int heightLine = 2;
+	static constexpr int heightGraph = 130;
+	static constexpr int marginWidth = 10;
+	static constexpr int textBaseLine = heightGraph + marginWidth * 1.6;
+	static constexpr double barProportions = 0.65;
 	double maxMemory;
 	int widthBox;
 	int barWidth;
