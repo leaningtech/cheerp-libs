@@ -1,5 +1,4 @@
 #include <cheerp/client.h>
-#include <cheerp/memprof.h>
 #include <deque>
 
 namespace [[cheerp::genericjs]] client
