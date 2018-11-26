@@ -38,26 +38,27 @@ public:
 	{
 		return marginWidth*3 + heightGraph;
 	}
-	bool hasBoxWidthChanged(int width)
+	bool hasBoxWidthChanged(int width, int samples = 0)
 	{
 		bool flag = (width != widthBox);
 		widthBox = width;
-		if (flag)
-		{
-			setBarWidth();
-			howOftenDoLine = 300 / barTotal();
-		}
 		return flag;
 	}
 	bool areWeGoingToOverflow(int samples) const
 	{
-		return (samples * barTotal() - barSpacing + marginWidth * 2 > widthBox);
+		return (samples * barTotal() - barSpacing  > widthGraph());
 	}
-private:
-	void setBarWidth()
+	int widthGraph() const
 	{
-		int widthGraph = widthBox - 2*marginWidth;
-		int pixelPerSample = widthGraph / (minSamplesToShow * 1.2);
+		return widthBox - 2*marginWidth;
+	}
+	void setBarWidth(int samples)
+	{
+		int pixelPerSample = widthGraph() / (minSamplesToShow);
+		if (samples > minSamplesToShow)
+		{
+			pixelPerSample = widthGraph() / samples;
+		}
 		if (pixelPerSample < 1) pixelPerSample = 1;
 		barWidth = pixelPerSample * barProportions;
 		barSpacing = pixelPerSample * (1.0 - barProportions);
@@ -71,6 +72,7 @@ private:
 			else
 				barWidth ++;
 		}
+		howOftenDoLine = 300 / barTotal();
 	}
 public:
 	static constexpr int heightLine = 2;
@@ -89,7 +91,9 @@ public:
 class GraphData
 {
 public:
-	GraphData(int windowLenghtInSamples) : firstIndex(0), erasedSamples(0), minimumSamplesToRemember(windowLenghtInSamples)
+	GraphData(int windowLenghtInSamples) : firstIndex(0), erasedSamples(0),
+		infiniteLength(windowLenghtInSamples <= 0 ? true : false),
+		minimumSamplesToRemember(infiniteLength ? -1 : windowLenghtInSamples), maxMemory(0)
 	{
 	}
 	client::TArray<int>* lastSamples()
@@ -103,9 +107,11 @@ public:
 	}
 	void walkBack(int ammount)
 	{
+		if (minimumSamplesToRemember < 0)
+			return;
 		int limit = shownSamples() / 2;
 		if (ammount > limit) ammount = limit;
-		while (ammount-- && size() > firstIndex)
+		while (ammount-- && size() > firstIndex && shownSamples() > minimumSamplesToRemember)
 		{
 			firstIndex++;
 		}
@@ -117,6 +123,10 @@ public:
 				samples.pop_front();
 			}
 		}
+	}
+	int getMaxMemory() const
+	{
+		return maxMemory;
 	}
 	int shownSamples() const
 	{
@@ -137,6 +147,7 @@ public:
 	void push_back(int x)
 	{
 		samples.push_back(x);
+		maxMemory = std::max(maxMemory, x);
 	}
 	void backInTime()
 	{
@@ -146,7 +157,11 @@ private:
 	std::deque<int> samples;
 	int firstIndex;
 	int erasedSamples;
+public:
+	const bool infiniteLength;
+private:
 	const int minimumSamplesToRemember;
+	int maxMemory;
 };
 
 class GraphDrawer
@@ -160,9 +175,9 @@ public:
 		currMemoryText(nullptr)
 	{
 	}
-	bool checkWidthBox()
+	bool checkWidthBox(int collectedSamples)
 	{
-		return appearence.hasBoxWidthChanged(box->get_offsetWidth());
+		return appearence.hasBoxWidthChanged(box->get_offsetWidth(), collectedSamples);
 	}
 private:
 	static client::String *cutRepresentation(client::String* nbr, int digits)
@@ -185,7 +200,7 @@ private:
 		if (M == 0) return seconds->substr(S>=110?0:1);
 		return (cutRepresentation(new client::String(M), -1))->concat(":")->concat(seconds);
 	}
-	static client::String *representMemory(double X)
+	static client::String *representMemory(const char * name, double X)
 	{
 		int steps = 0;
 		while (X >= 16768.0 && steps < 3)
@@ -198,7 +213,7 @@ private:
 		if (steps == 1) suffix = new client::String(" KB");
 		if (steps == 2) suffix = new client::String(" MB");
 		if (steps == 3) suffix= new client::String(" GB");
-		return (new client::String("current: "))->concat(cutRepresentation(new client::String(X),-1))->concat(suffix);
+		return (new client::String(name))->concat(cutRepresentation(new client::String(X),-1))->concat(suffix);
 	}
 	enum class Alignment{
 		Left, Right, Center
@@ -239,9 +254,10 @@ private:
 		curr->set_innerHTML(str);
 		return curr;
 	}
-	client::HTMLElement* buildCurrentMemoryText(double currLiveMemory)
+	client::HTMLElement* buildCurrentMemoryText(double maxMemory, double currLiveMemory)
 	{
-		return text(appearence.textBaseLine, 5, appearence.widthBox - 12, Alignment::Right, representMemory(currLiveMemory));
+		return text(appearence.textBaseLine, 5, appearence.widthBox - 12, Alignment::Right,
+				representMemory("Max:", maxMemory)->concat(representMemory(" |  Current:", currLiveMemory)));
 	}
 	static client::HTMLElement* rectangle(int bottom, int height, int left, int width, const char *color, client::HTMLElement* parent)
 	{
@@ -274,12 +290,36 @@ private:
 		parent->appendChild(curr);
 		return curr;
 	}
+	void drawSingleBar(int value, int index, const char*color)
+	{
+		rectangle(appearence.marginWidth, height(value), xLocation((index) / samplesPerPixel), appearence.barWidth, color, box);
+	}
 public:
+	void drawBar(const GraphData& data, int firstSample, int endSample)
+	{
+		int low = data.sample(firstSample);
+		int high = low;
+		for (int i=firstSample + 1; i < endSample; i++)
+		{
+			int curr = data.sample(i);
+			low = std::min(low, curr);
+			high = std::max(high, curr);
+		}
+		if (endSample - firstSample > 1)
+		{
+			drawSingleBar(high, endSample - 1 - data.skipped(), "cornflowerblue");
+		}
+		drawSingleBar(low, endSample - 1 - data.skipped(), "lightblue");
+	}
 	void redrawSamples(const GraphData& data)
 	{
-		for (int i = data.skipped(); i < data.size(); i++)
+		samplesPerPixel = 1;
+		while (data.shownSamples() / samplesPerPixel * appearence.barTotal() > appearence.widthGraph()) {
+			samplesPerPixel += std::max(1, (int)(samplesPerPixel * 0.3));
+		}
+		for (int i = data.skipped(); i < data.size(); i+= samplesPerPixel)
 		{
-			rectangle(appearence.marginWidth, height(data.sample(i)), xLocation(i - data.skipped()), appearence.barWidth, "lightblue", box);
+			drawBar(data, i, std::min(i+samplesPerPixel, data.size()));
 		}
 	}
 	void drawTimelineLocations(int deltaOldSamples, double timeFromStart, double frequencyMilliseconds)
@@ -288,10 +328,10 @@ public:
 		int X = 0;
 		int Y = appearence.barTotal();
 		int index = 0;
-		while (X == 0 || X + appearence.howOftenDoLine*Y < appearence.widthBox)
+		while (X + appearence.howOftenDoLine*Y < appearence.widthBox)
 		{
 			rectangle(appearence.marginWidth, appearence.heightGraph + appearence.marginWidth, X + appearence.marginWidth, 1, "grey", box);
-			text(appearence.textBaseLine, 5, 12 + X, Alignment::Left, representTime(timeFromStart + (index * appearence.howOftenDoLine + deltaOldSamples) * frequencyMilliseconds));
+			text(appearence.textBaseLine, 5, 12 + X, Alignment::Left, representTime(timeFromStart + (index * appearence.howOftenDoLine + deltaOldSamples) * frequencyMilliseconds * samplesPerPixel));
 			X += appearence.howOftenDoLine * Y;
 			index++;
 		}
@@ -309,11 +349,11 @@ public:
 		box = rectangleWide(0, appearence.heightBox(), "white", client::document.get_body());
 		line = rectangleWide(appearence.heightBox(), appearence.heightLine, "black", box);
 	}
-	void printCurrentMemoryText(int currentLiveMemory)
+	void printCurrentMemoryText(int maxMemory, int currentLiveMemory)
 	{
 		if (currMemoryText != nullptr)
 			client::document.get_body()->removeChild(currMemoryText);
-		currMemoryText = buildCurrentMemoryText(currentLiveMemory);
+		currMemoryText = buildCurrentMemoryText(maxMemory, currentLiveMemory);
 	}
 	int height(int sample_memory)
 	{
@@ -323,13 +363,9 @@ public:
 	{
 		return appearence.marginWidth + number * appearence.barTotal();
 	}
-	void createBar(double memory, int position)
-	{
-		rectangle(appearence.marginWidth, height(memory), xLocation(position), appearence.barWidth, "lightblue", box);
-	}
 	GraphAppearence appearence;
-private:
 	int samplesPerPixel;
+public:
 	client::HTMLElement* box;
 	client::HTMLElement* line;
 	client::HTMLElement* currMemoryText;
@@ -343,9 +379,13 @@ public:
 		graphDrawer(), graphData(intervalLengthMilliseconds / samplingPeriodMilliseconds)
 	{
 		int movingWindowSeconds = intervalLenghtToSeconds(intervalLengthMilliseconds);
-		graphDrawer.appearence.minSamplesToShow = intervalLengthMilliseconds / samplingPeriodMilliseconds;
-		if (graphDrawer.appearence.minSamplesToShow < 0) graphDrawer.appearence.minSamplesToShow = 1000;
+		graphDrawer.appearence.minSamplesToShow = intervalLengthMilliseconds / samplingPeriodMilliseconds * 1.2;
+		if (graphDrawer.appearence.minSamplesToShow < 0) graphDrawer.appearence.minSamplesToShow = 120;
+	if (graphData.infiniteLength)
+		client::console.log("MemProfGraph invoked.\nInterval length: unbounded\nSampling period: ", frequencyMilliseconds, " milliseconds");
+	else
 		client::console.log("MemProfGraph invoked.\nInterval length: ", movingWindowSeconds, " seconds\nSampling period: ", frequencyMilliseconds, " milliseconds");
+	client::console.log("For additional data, call from the Console cheerpMemUI.liveAllocations() for the details with stack strace of the current allocations or cheerpMemUI.lastSamples() for the array with the memory consumption data");
 		JsMemProf = new client::CheerpMemProf;
 		memProfGraph = this;
 		redraw();
@@ -377,6 +417,7 @@ private:
 	void redraw()
 	{
 		graphDrawer.redrawBox();
+		graphDrawer.appearence.setBarWidth(graphData.shownSamples());
 		graphDrawer.drawTimelineLocations(graphData.skipped(), 0.0, frequencyMilliseconds);
 		graphDrawer.redrawSamples(graphData);
 	}
@@ -385,21 +426,22 @@ private:
 		double currLiveMemory = JsMemProf->totalLiveMemory();
 		graphData.push_back(currLiveMemory);
 		bool hasChanged = graphDrawer.appearence.checkAgainstMaxMemory(currLiveMemory);
-		if (graphDrawer.checkWidthBox())
+		if (graphDrawer.checkWidthBox(graphData.shownSamples()))
 		{
 			hasChanged = true;
 			graphData.backInTime();
 		}
-		while (graphDrawer.appearence.areWeGoingToOverflow(graphData.shownSamples()))
+		int tries = 10;
+		while (tries-- && graphDrawer.appearence.areWeGoingToOverflow(graphData.shownSamples() / graphDrawer.samplesPerPixel))
 		{
 			hasChanged = true;
 			graphData.walkBack(graphDrawer.appearence.howOftenDoLine);
 		}
-		if (!hasChanged)
-			graphDrawer.createBar(currLiveMemory, graphData.shownSamples() -1);
+		if (!hasChanged && (graphData.shownSamples() % graphDrawer.samplesPerPixel == graphDrawer.samplesPerPixel -1))
+			graphDrawer.drawBar(graphData, graphData.size() - graphDrawer.samplesPerPixel, graphData.size());
 		else
 			redraw();
-		graphDrawer.printCurrentMemoryText(currLiveMemory);
+		graphDrawer.printCurrentMemoryText(graphData.getMaxMemory(), currLiveMemory);
 	}
 	static void mainLoop()
 	{
@@ -408,7 +450,6 @@ private:
 	static CheerpMemProfGraphInternals* memProfGraph;
 	const int frequencyMilliseconds;
 	client::CheerpMemProf* JsMemProf;
-	int samplesPerPixel;
 	GraphData graphData;
 	GraphDrawer graphDrawer;
 };
@@ -437,7 +478,3 @@ private:
 	client::CheerpMemProf* cheerpMemProf;
 	CheerpMemProfGraphInternals* memProfGraph;
 };
-
-void webMain()
-{
-}
