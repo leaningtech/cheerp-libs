@@ -1,0 +1,6 @@
+A link to memprofui.js (likely in /cheerps-libs-addon/build_asmjs/memprofui.js) have to be provided.
+The name has to be memprofui.js.
+
+"make link_memprofui" to try to have it build.
+
+"make" to actually run the tests.
