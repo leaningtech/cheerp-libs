@@ -4,6 +4,12 @@
 #include <cheerp/types.h>
 #include "memprof.h"
 
+//Undefine the next row if you prefer to have the stacktrace built at the error generation
+#define STACKTRACE_BUILT_LAZILY
+
+//Change the number here to have a different depth, or comment it to have it unlimited
+//#define STACKTRACE_DEPTH 15
+
 extern "C"
 {
 	// We redefine internal symbols here
@@ -22,11 +28,29 @@ class CheerpAllocationsTracker
 	class AllocationData
 	{
 	public:
+		AllocationData(const size_t dim, client::Error* error) :
+			AllocationData(dim, error, NULL) {}
 		AllocationData(const size_t dim, client::String* stackTrace) :
-			dim(dim), stackTrace(stackTrace), insertionTime(getTimestamp()){}
-		const size_t dim;
-		client::String* stackTrace;
+			AllocationData(dim, NULL, stackTrace) {}
+		client::String* getStackTrace()
+		{
+			if (stackTrace == NULL)
+			{
+				stackTrace = error->get_stack();
+				if (stackTrace->startsWith("Error"))
+					stackTrace = stackTrace->slice(6);
+				error = NULL;
+			}
+			return stackTrace;
+		}
 		const CHEERP_MEMPROF_TAG insertionTime;
+		const size_t dim;
+	private:
+		AllocationData(const size_t dim, client::Error* error, client::String* stackTrace) :
+			insertionTime(getTimestamp()), dim(dim),
+			error(error), stackTrace(stackTrace) {}
+		client::Error* error;
+		client::String* stackTrace;
 	};
 	CheerpAllocationsTracker()
 	{
@@ -46,6 +70,13 @@ class CheerpAllocationsTracker
 		if (ptr == 0)
 			return;
 		allocatedMemory->set(ptr, new AllocationData(dim, s));
+		totalMemoryAllocated += dim;
+	}
+	void registerAlloc_(uintptr_t ptr, size_t dim, client::Error* e)
+	{
+		if (ptr == 0)
+			return;
+		allocatedMemory->set(ptr, new AllocationData(dim, e));
 		totalMemoryAllocated += dim;
 	}
 	void registerFree_(uintptr_t ptr)
@@ -108,15 +139,24 @@ class CheerpAllocationsTracker
 	}
 	static client::String *getStackTrace()
 	{
-		client::Object* old;
-		__asm__("Error.stackTraceLimit" : "=r"(old) : );
-		__asm__("Error.stackTraceLimit = Infinity");
-		client::Error* e = new client::Error();
+		client::Error* e = getError();
 		client::String* s = e->get_stack();
-		__asm__("Error.stackTraceLimit = %0" : : "r"(old));
 		if (s->startsWith("Error"))
 			s = s->slice(6);
 		return s;
+	}
+	static client::Error *getError()
+	{
+		client::Object* old;
+		__asm__("Error.stackTraceLimit" : "=r"(old) : );
+#ifndef STACKTRACE_DEPTH
+		__asm__("Error.stackTraceLimit = Infinity");
+#else
+		__asm__("Error.stackTraceLimit = %0" : : "r"(STACKTRACE_DEPTH + 5));
+#endif
+		client::Error* e = new client::Error();
+		__asm__("Error.stackTraceLimit = %0" : : "r"(old));
+		return e;
 	}
 
 public:
@@ -129,7 +169,7 @@ public:
 			{
 			size_t size = d->dim;
 			uintptr_t address = ptr;
-			StackTraceParsing stackTraceParsing(d->stackTrace);
+			StackTraceParsing stackTraceParsing(d->getStackTrace());
 			client::TArray<client::String>* stackTrace = stackTraceParsing.getStackTrace();
 			client::Object* composite = CHEERP_OBJECT(size, address, stackTrace);
 			allocations->push(composite);
@@ -164,8 +204,12 @@ public:
 
 	static void registerAlloc(uintptr_t ptr, uintptr_t size)
 	{
-		client::String* s = CheerpAllocationsTracker::getStackTrace();
-		CheerpAllocationsTracker::instance()->registerAlloc_(ptr, size, s);
+#ifndef STACKTRACE_BUILT_LAZILY
+		client::String* x = CheerpAllocationsTracker::getStackTrace();
+#else
+		client::Error* x = CheerpAllocationsTracker::getError();
+#endif
+		CheerpAllocationsTracker::instance()->registerAlloc_(ptr, size, x);
 	}
 
 	static void registerFree(uintptr_t ptr)
@@ -309,7 +353,7 @@ private:
 		s = s->concat("\t\tSize : ");
 		s = s->concat(integerBaseToString(d->dim, 10, 1)->padStart(8));
 		s = s->concat("\n");
-		s = s->concat(prettyStack(d->stackTrace));
+		s = s->concat(prettyStack(d->getStackTrace()));
 		client::console.log(s);
 	}
 	client::TMap <CHEERP_MEMPROF_TAG, client::String*>* nameTags;

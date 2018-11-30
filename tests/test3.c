@@ -1,3 +1,5 @@
+// Copyright 2018 Leaning Technologies Ltd. All Rights Reserved.
+
 #include <cheerp/memprof.h>
 #include <stdlib.h>
 

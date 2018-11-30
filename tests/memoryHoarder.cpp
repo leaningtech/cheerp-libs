@@ -1,4 +1,5 @@
-//#include <cheerp/clientlib.h>
+// Copyright 2018 Leaning Technologies Ltd. All Rights Reserved.
+
 #include <cheerp/client.h>
 #include <cheerp/memprof.h>
 #include <vector>

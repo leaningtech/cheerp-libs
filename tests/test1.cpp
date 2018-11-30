@@ -1,5 +1,5 @@
-// The cheerp/memprof.h header contains declarations
-// for all the memory profiler APIs
+// Copyright 2018 Leaning Technologies Ltd. All Rights Reserved. 
+
 #include <cheerp/memprof.h>
 #include <map>
 #include <vector>
