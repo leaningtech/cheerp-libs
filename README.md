@@ -11,6 +11,13 @@ Cheerp GLES implementation installation
 make -C webgles install INSTALL_PREFIX=/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 ```
 
+Cheerp helper library for Wasm
+---------------------------------------
+
+```
+make -C wasm install INSTALL_PREFIX=/opt/cheerp CHEERP_PREFIX=/opt/cheerp
+```
+
 Cheerp PreExecuted standard C++ library installation (both generic and asm.js version)
 ----------------------------------------------------
 
