@@ -31,33 +31,41 @@ extern "C"
 		// Wasm supports unaligned load/stores, take advantage of this for a faster memcpy
 		unsigned char* src8 = (unsigned char*)src;
 		unsigned char* dst8 = (unsigned char*)dst;
+		while(((unsigned long)dst8)&3)
+		{
+			if(len == 0)
+				return dst;
+			len--;
+			*dst8 = *src8;
+			dst8++;
+			src8++;
+		}
 		unsigned char* srcEnd = src8+len;
-		if(len < 16)
+		// Now the dest pointer is aligned
+		// Unroll for 64 bytes at a time
+		while(int(src8) < int(srcEnd - 64))
 		{
-			// Small, use a byte loop
-			while(src8 != srcEnd)
-			{
-			*dst8 = *src8;
-			dst8++;
-			src8++;
-			}
-			return dst;
+			*((unsigned int*)dst8) = *((unsigned int*)src8);
+			*((unsigned int*)(dst8+4)) = *((unsigned int*)(src8+4));
+			*((unsigned int*)(dst8+8)) = *((unsigned int*)(src8+8));
+			*((unsigned int*)(dst8+12)) = *((unsigned int*)(src8+12));
+			*((unsigned int*)(dst8+16)) = *((unsigned int*)(src8+16));
+			*((unsigned int*)(dst8+20)) = *((unsigned int*)(src8+20));
+			*((unsigned int*)(dst8+24)) = *((unsigned int*)(src8+24));
+			*((unsigned int*)(dst8+28)) = *((unsigned int*)(src8+28));
+			*((unsigned int*)(dst8+32)) = *((unsigned int*)(src8+32));
+			*((unsigned int*)(dst8+36)) = *((unsigned int*)(src8+36));
+			*((unsigned int*)(dst8+40)) = *((unsigned int*)(src8+40));
+			*((unsigned int*)(dst8+44)) = *((unsigned int*)(src8+44));
+			*((unsigned int*)(dst8+48)) = *((unsigned int*)(src8+48));
+			*((unsigned int*)(dst8+52)) = *((unsigned int*)(src8+52));
+			*((unsigned int*)(dst8+56)) = *((unsigned int*)(src8+56));
+			*((unsigned int*)(dst8+60)) = *((unsigned int*)(src8+60));
+			dst8+=64;
+			src8+=64;
 		}
-		// Align the source operand
-		if(((unsigned long)src8)&1)
-		{
-			*dst8 = *src8;
-			dst8++;
-			src8++;
-		}
-		if(((unsigned long)src8)&2)
-		{
-			*((unsigned short*)dst8) = *((unsigned short*)src8);
-			dst8+=2;
-			src8+=2;
-		}
-		// Now the source pointer is aligned, loop 4 bytes at a time
-		while(src8 < srcEnd - 4)
+		// Loop 4 bytes at a time
+		while(int(src8) < int(srcEnd - 4))
 		{
 			*((unsigned int*)dst8) = *((unsigned int*)src8);
 			dst8+=4;
