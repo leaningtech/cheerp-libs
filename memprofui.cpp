@@ -11,6 +11,7 @@ namespace [[cheerp::genericjs]] client
 	public:
 		CheerpMemProf();
 		client::TArray<client::Object*>* liveAllocations();
+		client::Object* liveAllocationsTree(bool isTopDown);
 		size_t totalLiveMemory();
 	};
 };
@@ -471,6 +472,14 @@ public:
 	client::TArray<client::Object*>* liveAllocations()
         {
                 return cheerpMemProf->liveAllocations();
+        }
+	client::Object* liveAllocationsBottomUp()
+        {
+                return cheerpMemProf->liveAllocationsTree(false);
+        }
+	client::Object* liveAllocationsTopDown()
+        {
+                return cheerpMemProf->liveAllocationsTree(true);
         }
         size_t totalLiveMemory()
         {

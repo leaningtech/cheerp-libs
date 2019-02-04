@@ -43,14 +43,92 @@ class CheerpAllocationsTracker
 			}
 			return stackTrace;
 		}
+		client::TArray<client::String>* getPrettyStackTrace(bool isTopDown)
+		{
+			auto& curr = arrayStackTrace[isTopDown?1:0];
+			if (curr == NULL)
+			{
+				if (arrayStackTrace[0] == NULL)
+				{
+					StackTraceParsing stackTraceParsing(getStackTrace());
+					arrayStackTrace[0] = stackTraceParsing.getStackTrace();
+				}
+				if (isTopDown)
+				{
+					arrayStackTrace[1] = new client::TArray<client::String>;
+					for (int i = 0; i<arrayStackTrace[0]->get_length(); i++)
+						arrayStackTrace[1]->push((*arrayStackTrace[0])[i]);
+					arrayStackTrace[1]->reverse();
+				}
+			}
+			return curr;
+		}
 		const CHEERP_MEMPROF_TAG insertionTime;
 		const size_t dim;
 	private:
 		AllocationData(const size_t dim, client::Error* error, client::String* stackTrace) :
 			insertionTime(getTimestamp()), dim(dim),
-			error(error), stackTrace(stackTrace) {}
+			error(error), stackTrace(stackTrace), arrayStackTrace{NULL,NULL} {}
 		client::Error* error;
 		client::String* stackTrace;
+		client::TArray<client::String>* arrayStackTrace[2];
+	};
+	class StatTreeNode
+	{
+	public:
+		StatTreeNode(client::String* name) :
+			liveMemory(0), function(name), childrenNodes(NULL) {}
+		void addAllocation(const bool isTopDown, AllocationData* data, int depth)
+		{
+			liveMemory += data->dim;
+
+			auto stack = data->getPrettyStackTrace(isTopDown);
+			if (depth >= stack->get_length())
+				return;
+			if (childrenNodes == NULL)
+				childrenNodes = new client::TMap<client::String*, StatTreeNode*>;
+
+			client::String* line = new client::String((*stack)[depth]);
+			if (childrenNodes->has(line) == false)
+			{
+				childrenNodes->set(line, new StatTreeNode(line));
+			}
+			childrenNodes->get(line)->addAllocation(isTopDown, data, depth+1);
+		}
+		client::Object* buildObject()
+		{
+			client::TArray<client::Object*>* children = new client::TArray<client::Object*>;
+			if (childrenNodes)
+			{
+				client::TArray<StatTreeNode>* sons= new client::TArray<StatTreeNode>;
+
+				childrenNodes->forEach(cheerp::Callback([&sons](StatTreeNode* a, client::String* s)
+							{
+							sons->push(a);
+							}
+							));
+
+				sons -> sort(cheerp::Callback([](StatTreeNode* a, StatTreeNode* b)
+							{
+							if (a->liveMemory < b->liveMemory)
+								return 1;
+							if (a->liveMemory > b->liveMemory)
+								return -1;
+							return 0;
+							}
+							));
+				sons -> forEach(cheerp::Callback([&children](StatTreeNode* a)
+							{
+							children->push(a->buildObject());
+							}
+							));
+			}
+			return CHEERP_OBJECT(liveMemory, function, children);
+		}
+	private:
+		size_t liveMemory;
+		client::String* function;
+		client::TMap<client::String*,StatTreeNode*>* childrenNodes;
 	};
 	CheerpAllocationsTracker()
 	{
@@ -108,11 +186,9 @@ class CheerpAllocationsTracker
 		s = s->concat("Memory allocated after tag : ")->concat(client::String(memoryUsedStartingAtTag(tag)).padStart(8))->concat("\n");
 		s = s->concat("Memory allocated in total  : ")->concat(client::String(totalUsed()).padStart(8));
 		client::console.log(s);
-		static CHEERP_MEMPROF_TAG tag_;
-		tag_ = tag;
-		allocatedMemory->forEach(cheerp::Callback([](AllocationData *d, uintptr_t ptr)
+		allocatedMemory->forEach(cheerp::Callback([tag](AllocationData *d, uintptr_t ptr)
 			{
-			if (d->insertionTime < tag_)
+			if (d->insertionTime < tag)
 				return;
 			logMemoryBlock(d, ptr);
 			}
@@ -120,13 +196,10 @@ class CheerpAllocationsTracker
 	}
 	size_t memoryUsedStartingAtTag(CHEERP_MEMPROF_TAG tag)
 	{
-		static size_t currMemoryAllocated;
-		static CHEERP_MEMPROF_TAG tag_;
-		currMemoryAllocated = 0;
-		tag_ = tag;
-		allocatedMemory->forEach(cheerp::Callback([](AllocationData *d, uintptr_t ptr)
+		size_t currMemoryAllocated = 0;
+		allocatedMemory->forEach(cheerp::Callback([tag, &currMemoryAllocated](AllocationData *d, uintptr_t ptr)
 			{
-			if (d->insertionTime < tag_)
+			if (d->insertionTime < tag)
 				return;
 			currMemoryAllocated += d->dim;
 			}
@@ -158,24 +231,31 @@ class CheerpAllocationsTracker
 		__asm__("Error.stackTraceLimit = %0" : : "r"(old));
 		return e;
 	}
-
 public:
-	static client::TArray<client::Object*>* liveAllocations()
+	static client::TArray<client::Object>* liveAllocations()
 	{
-		static client::TArray<client::Object *>* allocations;
-		allocations = new client::TArray<client::Object*>;
+		client::TArray<client::Object>* allocations= new client::TArray<client::Object>;
 
-		instance()->allocatedMemory->forEach(cheerp::Callback([](AllocationData *d, uintptr_t ptr)
+		instance()->allocatedMemory->forEach(cheerp::Callback([&allocations](AllocationData *d, uintptr_t ptr)
 			{
 			size_t size = d->dim;
 			uintptr_t address = ptr;
-			StackTraceParsing stackTraceParsing(d->getStackTrace());
-			client::TArray<client::String>* stackTrace = stackTraceParsing.getStackTrace();
+			client::TArray<client::String>* stackTrace = d->getPrettyStackTrace(true);
 			client::Object* composite = CHEERP_OBJECT(size, address, stackTrace);
 			allocations->push(composite);
 			}
 			));
 		return allocations;
+	}
+	static client::Object* liveAllocationsTree(const bool isTopDown)
+	{
+		StatTreeNode stat(new client::String(""));
+		instance()->allocatedMemory->forEach(cheerp::Callback([&stat, isTopDown](AllocationData *d, uintptr_t ptr)
+			{
+			stat.addAllocation(isTopDown, d, 0);
+			}
+			));
+		return stat.buildObject();
 	}
 	static void statusTracking(int tracker_descriptor)
 	{
@@ -369,9 +449,13 @@ public:
 	CheerpMemProf()
 	{
 	}
-	client::TArray<client::Object*>* liveAllocations()
+	client::TArray<client::Object>* liveAllocations()
 	{
 		return CheerpAllocationsTracker::liveAllocations();
+	}
+	client::Object* liveAllocationsTree(bool isTopDown)
+	{
+		return CheerpAllocationsTracker::liveAllocationsTree(isTopDown);
 	}
 	size_t totalLiveMemory()
 	{
