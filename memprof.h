@@ -18,10 +18,10 @@ extern "C"
 	//Log to the console the memory allocated after the tag creation and yet to be freed
 	__attribute__((cheerp_wasm)) void cheerpMemProfLive(CHEERP_MEMPROF_TAG tag);
 
-	//Return the ammount of memory allocated after the tag creation and yet to be freed
+	//Return the amount of memory allocated after the tag creation and yet to be freed
 	__attribute__((cheerp_wasm)) size_t cheerpMemProfUsed(CHEERP_MEMPROF_TAG tag);
 
-	//Return the total ammount of memory currently allocated by the program
+	//Return the total amount of memory currently allocated by the program
 	__attribute__((cheerp_wasm)) size_t cheerpMemProfTotalUsed();
 #ifdef __cplusplus
 }
