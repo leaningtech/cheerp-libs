@@ -41,17 +41,17 @@ void webGLESInit(const client::String& canvasName, int options)
 void webGLESInit(client::HTMLCanvasElement* canvas, int options)
 {
 	webGLESLookupArrayInit();
-	client::WebGLContextAttributes* optObj = nullptr;
-	if(options)
-	{
-		optObj = new client::WebGLContextAttributes();
-		if(options & WG_NO_ALPHA)
-			optObj->set_alpha(0);
-		if(options & WG_NO_DEPTH)
-			optObj->set_depth(0);
-		if(options & WG_STENCIL)
-			optObj->set_stencil(1);
-	}
+	client::WebGLContextAttributes* optObj = new client::WebGLContextAttributes();
+	if(options & WG_NO_ALPHA)
+		optObj->set_alpha(0);
+	if(options & WG_NO_DEPTH)
+		optObj->set_depth(0);
+	if(options & WG_STENCIL)
+		optObj->set_stencil(1);
+	if (options & WG_PREMULTIPLIED_ALPHA)
+		optObj->set_premultipliedAlpha(1);
+	else
+		optObj->set_premultipliedAlpha(0);
 	webGLES = static_cast<client::WebGLRenderingContext*>(canvas->getContext("experimental-webgl", optObj));
 	if (webGLES == NULL)
 		client::console.log("Sorry, we looked hard, but no sign of WebGL has been found :(");
