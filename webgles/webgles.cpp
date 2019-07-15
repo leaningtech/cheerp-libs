@@ -449,13 +449,13 @@ void __attribute__((always_inline)) glGetBooleanv (GLenum pname, GLboolean* data
 	}
 	if(numElements == 0)
 	{
-		*data = *ret;
+		*data = (double)*ret;
 		return;
 	}
 	for(GLsizei i=0;i<numElements;i++)
 	{
 		client::Array& retArray = *(client::Array*)ret;
-		data[i] = *retArray[i];
+		data[i] = (double)*retArray[i];
 	}
 }
 
@@ -505,13 +505,13 @@ void __attribute__((always_inline)) glGetDoublev (GLenum pname, GLdouble* data)
 	}
 	if(numElements == 0)
 	{
-		*data = *ret;
+		*data = (double)*ret;
 		return;
 	}
 	for(GLsizei i=0;i<numElements;i++)
 	{
 		client::Array& retArray = *(client::Array*)ret;
-		data[i] = *retArray[i];
+		data[i] = (double)*retArray[i];
 	}
 }
 
@@ -561,13 +561,13 @@ void __attribute__((always_inline)) glGetFloatv (GLenum pname, GLfloat* data)
 	}
 	if(numElements == 0)
 	{
-		*data = *ret;
+		*data = (double)*ret;
 		return;
 	}
 	for(GLsizei i=0;i<numElements;i++)
 	{
 		client::Array& retArray = *(client::Array*)ret;
-		data[i] = *retArray[i];
+		data[i] = (double)*retArray[i];
 	}
 }
 
@@ -617,13 +617,13 @@ void __attribute__((always_inline)) glGetIntegerv (GLenum pname, GLint* data)
 	}
 	if(numElements == 0)
 	{
-		*data = *ret;
+		*data = (double)*ret;
 		return;
 	}
 	for(GLsizei i=0;i<numElements;i++)
 	{
 		client::Array& retArray = *(client::Array*)ret;
-		data[i] = *retArray[i];
+		data[i] = (double)*retArray[i];
 	}
 }
 

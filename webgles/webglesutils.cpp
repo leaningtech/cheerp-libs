@@ -102,7 +102,7 @@ void glGetShaderiv(GLuint shader, GLenum pname, GLint *params)
 		params[0] = info == nullptr ? 0 : info->get_length() + 1;
 	}
 	else
-		params[0] = *webGLES->getShaderParameter(webGLESLookupWebGLShader(shader), pname);
+		params[0] = (double)*webGLES->getShaderParameter(webGLESLookupWebGLShader(shader), pname);
 }
 
 void glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog)
@@ -135,7 +135,7 @@ void glGetProgramiv(GLuint program, GLenum pname, GLint *params)
 		params[0] = info == nullptr ? 0 : info->get_length() + 1;
 	}
 	else
-		params[0] = *webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
+		params[0] = (double)*webGLES->getProgramParameter(webGLESLookupWebGLProgram(program), pname);
 }
 
 void glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei* length, GLchar* infoLog)
