@@ -34,7 +34,8 @@ enum WEBGLES_OPTIONS {
 	WG_NO_ALPHA = 1,
 	WG_NO_DEPTH = 2,
 	WG_STENCIL = 4,
-	WG_PREMULTIPLIED_ALPHA = 8
+	WG_PREMULTIPLIED_ALPHA = 8,
+	WG_NO_ANTIALIAS = 16,
 };
 [[cheerp::genericjs]] void webGLESInit(const client::String& canvasName, int options = 0);
 [[cheerp::genericjs]] void webGLESInit(client::HTMLCanvasElement* canvas, int options = 0);

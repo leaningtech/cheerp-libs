@@ -46,6 +46,8 @@ void webGLESInit(client::HTMLCanvasElement* canvas, int options)
 		optObj->set_alpha(0);
 	if(options & WG_NO_DEPTH)
 		optObj->set_depth(0);
+	if(options & WG_NO_ANTIALIAS)
+		optObj->set_antialias(0);
 	if(options & WG_STENCIL)
 		optObj->set_stencil(1);
 	if (options & WG_PREMULTIPLIED_ALPHA)
