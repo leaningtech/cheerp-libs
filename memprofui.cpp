@@ -5,7 +5,7 @@
 
 namespace [[cheerp::genericjs]] client
 {
-	class CheerpMemProf
+	class CheerpMemProf: public Object
 	{
 	private:
 	public:
