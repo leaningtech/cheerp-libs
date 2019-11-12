@@ -31,16 +31,17 @@ extern "C"
 		// Wasm supports unaligned load/stores, take advantage of this for a faster memcpy
 		unsigned char* src8 = (unsigned char*)src;
 		unsigned char* dst8 = (unsigned char*)dst;
+
+		unsigned char* srcEnd = src8+len;
+
 		while(((unsigned long)dst8)&3)
 		{
-			if(len == 0)
+			if(src8 == srcEnd)
 				return dst;
-			len--;
 			*dst8 = *src8;
 			dst8++;
 			src8++;
 		}
-		unsigned char* srcEnd = src8+len;
 		// Now the dest pointer is aligned
 		// Unroll for 64 bytes at a time
 		while(int(src8) <= int(srcEnd - 64))
