@@ -43,7 +43,7 @@ extern "C"
 		unsigned char* srcEnd = src8+len;
 		// Now the dest pointer is aligned
 		// Unroll for 64 bytes at a time
-		while(int(src8) < int(srcEnd - 64))
+		while(int(src8) <= int(srcEnd - 64))
 		{
 			*((unsigned int*)dst8) = *((unsigned int*)src8);
 			*((unsigned int*)(dst8+4)) = *((unsigned int*)(src8+4));
@@ -65,7 +65,7 @@ extern "C"
 			src8+=64;
 		}
 		// Loop 4 bytes at a time
-		while(int(src8) < int(srcEnd - 4))
+		while(int(src8) <= int(srcEnd - 4))
 		{
 			*((unsigned int*)dst8) = *((unsigned int*)src8);
 			dst8+=4;
