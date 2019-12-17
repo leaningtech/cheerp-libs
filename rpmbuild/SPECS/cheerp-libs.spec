@@ -1,5 +1,5 @@
 Name: cheerp-libs
-Version: 2.1
+Version: 2.0
 Release:        1%{?dist}
 Summary: A C++ compiler for the Web, libraries
 
