@@ -457,7 +457,7 @@ public:
 	{
 		return CheerpAllocationsTracker::liveAllocationsTree(isTopDown);
 	}
-	size_t totalLiveMemory()
+	int32_t totalLiveMemory()
 	{
 		return CheerpAllocationsTracker::totalLiveMemory();
 	}

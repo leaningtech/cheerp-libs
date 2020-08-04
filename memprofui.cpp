@@ -481,7 +481,7 @@ public:
         {
                 return cheerpMemProf->liveAllocationsTree(true);
         }
-        size_t totalLiveMemory()
+        int32_t totalLiveMemory()
         {
                 return cheerpMemProf->totalLiveMemory();
         }
