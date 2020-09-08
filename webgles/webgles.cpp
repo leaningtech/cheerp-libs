@@ -19,6 +19,7 @@
  ***************************************************************/
 
 #include "webgles.h"
+#include <assert.h>
 client::Array* WebGLProgramArray;
 
 client::WebGLProgram* webGLESLookupWebGLProgram(int objId)
