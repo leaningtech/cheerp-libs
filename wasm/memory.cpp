@@ -46,31 +46,23 @@ extern "C"
 		// Unroll for 64 bytes at a time
 		while(int(src8) <= int(srcEnd - 64))
 		{
-			*((unsigned int*)dst8) = *((unsigned int*)src8);
-			*((unsigned int*)(dst8+4)) = *((unsigned int*)(src8+4));
-			*((unsigned int*)(dst8+8)) = *((unsigned int*)(src8+8));
-			*((unsigned int*)(dst8+12)) = *((unsigned int*)(src8+12));
-			*((unsigned int*)(dst8+16)) = *((unsigned int*)(src8+16));
-			*((unsigned int*)(dst8+20)) = *((unsigned int*)(src8+20));
-			*((unsigned int*)(dst8+24)) = *((unsigned int*)(src8+24));
-			*((unsigned int*)(dst8+28)) = *((unsigned int*)(src8+28));
-			*((unsigned int*)(dst8+32)) = *((unsigned int*)(src8+32));
-			*((unsigned int*)(dst8+36)) = *((unsigned int*)(src8+36));
-			*((unsigned int*)(dst8+40)) = *((unsigned int*)(src8+40));
-			*((unsigned int*)(dst8+44)) = *((unsigned int*)(src8+44));
-			*((unsigned int*)(dst8+48)) = *((unsigned int*)(src8+48));
-			*((unsigned int*)(dst8+52)) = *((unsigned int*)(src8+52));
-			*((unsigned int*)(dst8+56)) = *((unsigned int*)(src8+56));
-			*((unsigned int*)(dst8+60)) = *((unsigned int*)(src8+60));
+			*((unsigned long long*)dst8) = *((unsigned long long*)src8);
+			*((unsigned long long*)(dst8+8)) = *((unsigned long long*)(src8+8));
+			*((unsigned long long*)(dst8+16)) = *((unsigned long long*)(src8+16));
+			*((unsigned long long*)(dst8+24)) = *((unsigned long long*)(src8+24));
+			*((unsigned long long*)(dst8+32)) = *((unsigned long long*)(src8+32));
+			*((unsigned long long*)(dst8+40)) = *((unsigned long long*)(src8+40));
+			*((unsigned long long*)(dst8+48)) = *((unsigned long long*)(src8+48));
+			*((unsigned long long*)(dst8+56)) = *((unsigned long long*)(src8+56));
 			dst8+=64;
 			src8+=64;
 		}
-		// Loop 4 bytes at a time
-		while(int(src8) <= int(srcEnd - 4))
+		// Loop 8 bytes at a time
+		while(int(src8) <= int(srcEnd - 8))
 		{
-			*((unsigned int*)dst8) = *((unsigned int*)src8);
-			dst8+=4;
-			src8+=4;
+			*((unsigned long long*)dst8) = *((unsigned long long*)src8);
+			dst8+=8;
+			src8+=8;
 		}
 		// Byte loop to finish the copy
 		while(src8 != srcEnd)
