@@ -73,4 +73,38 @@ extern "C"
 		}
 		return dst;
 	}
+
+	void *memset(void *dst, int c, size_t len)
+	{
+		unsigned char cu = c;
+		unsigned int c32 = (cu<<0) | (cu<<8) | (cu<<16) | (cu<<24);
+		unsigned long long c64 = ((unsigned long long)(c32)<<0) | ((unsigned long long)(c32)<<32);
+		unsigned char* dst8 = (unsigned char*)dst;
+		unsigned char* dstEnd = dst8 + len;
+		while(int(dst8) < int(dstEnd - 64))
+		{
+			*((unsigned long long*)dst8) = c64;
+			*((unsigned long long*)(dst8+8)) = c64;
+			*((unsigned long long*)(dst8+16)) = c64;
+			*((unsigned long long*)(dst8+24)) = c64;
+			*((unsigned long long*)(dst8+32)) = c64;
+			*((unsigned long long*)(dst8+40)) = c64;
+			*((unsigned long long*)(dst8+48)) = c64;
+			*((unsigned long long*)(dst8+56)) = c64;
+			dst8+=64;
+		}
+		// Loop 8 bytes at a time
+		while(int(dst8) <= int(dstEnd - 8))
+		{
+			*((unsigned long long*)dst8) = c64;
+			dst8+=8;
+		}
+		// Byte loop to finish the copy
+		while(dst8 != dstEnd)
+		{
+			*dst8 = cu;
+			dst8++;
+		}
+		return dst;
+	}
 }
