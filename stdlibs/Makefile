@@ -9,14 +9,14 @@ genericjs: genericjs/libstdlibs.bc
 
 asmjs: asmjs/libstdlibs.bc
 
-genericjs/libstdlibs.full.bc: ${CHEERP_PREFIX}/lib/genericjs/libc.bc ${CHEERP_PREFIX}/lib/genericjs/libm.bc ${CHEERP_PREFIX}/lib/genericjs/libc++.bc ${CHEERP_PREFIX}/lib/genericjs/libc++abi.bc
+genericjs/libstdlibs.full.bc: ${CHEERP_PREFIX}/lib/genericjs/libc.bc  ${CHEERP_PREFIX}/lib/genericjs/libc++.bc ${CHEERP_PREFIX}/lib/genericjs/libc++abi.bc
 	@mkdir -p genericjs
 	${CHEERP_PREFIX}/bin/llvm-link $^ -o $@
 
 genericjs/libstdlibs.bc: genericjs/libstdlibs.full.bc
 	${CHEERP_PREFIX}/bin/opt -passes="default<O3>,PreExecute" $^ -o $@
 
-asmjs/libstdlibs.full.bc: ${CHEERP_PREFIX}/lib/asmjs/libc.bc ${CHEERP_PREFIX}/lib/asmjs/libm.bc ${CHEERP_PREFIX}/lib/asmjs/libc++.bc ${CHEERP_PREFIX}/lib/asmjs/libc++abi.bc
+asmjs/libstdlibs.full.bc: ${CHEERP_PREFIX}/lib/asmjs/libc.bc ${CHEERP_PREFIX}/lib/asmjs/libc++.bc ${CHEERP_PREFIX}/lib/asmjs/libc++abi.bc
 	@mkdir -p asmjs
 	${CHEERP_PREFIX}/bin/llvm-link $^ -o $@
 
