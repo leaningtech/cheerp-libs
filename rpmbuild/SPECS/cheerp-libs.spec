@@ -7,8 +7,8 @@ License:  GPLv2
 URL: https://leaningtech.com/cheerp
 Source0: %{NAME}_%{VERSION}.orig.tar.gz
 
-BuildRequires: cmake make cheerp-llvm-clang = %{VERSION} cheerp-utils = %{VERSION} cheerp-newlib = %{VERSION} cheerp-libcxx = %{VERSION} cheerp-libcxxabi = %{VERSION}
-Requires: cheerp-llvm-clang = %{VERSION} cheerp-utils = %{VERSION} cheerp-newlib = %{VERSION} cheerp-libcxx = %{VERSION} cheerp-libcxxabi = %{VERSION}
+BuildRequires: cmake make cheerp-llvm-clang = %{VERSION} cheerp-utils = %{VERSION} cheerp-newlib = %{VERSION} cheerp-libcxx-libcxxabi = %{VERSION}
+Requires: cheerp-llvm-clang = %{VERSION} cheerp-utils = %{VERSION} cheerp-newlib = %{VERSION} cheerp-libcxx-libcxxabi = %{VERSION}
 
 %description
 Cheerp is a tool to bring C++ programming to the Web. It can generate a seamless
