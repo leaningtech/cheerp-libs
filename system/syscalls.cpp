@@ -94,6 +94,8 @@ long __syscall_writev(long fd, const iovec* ios, long len)
 	long __ret = 0;
 	for (int i = 0; i < len; i++)
 	{
+		if (ios[i].iov_len == 0)
+			continue;
 		print_stream(get_base(&ios[i]), ios[i].iov_len, i < len - 1);
 		__ret += ios[i].iov_len;
 	}
