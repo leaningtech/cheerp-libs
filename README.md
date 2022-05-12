@@ -45,8 +45,8 @@ Cheerp syscall library installation (only generic js version)
 ```
 cd system
 cmake -B build_genericjs -DCMAKE_INSTALL_PREFIX=/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake .
-make
-make install
+make -C build_genericjs
+make install -C build_genericjs
 cd ..
 ```
 
@@ -55,7 +55,7 @@ Cheerp syscall library installation (only asm.js version)
 
 ```
 cmake -B build_asmjs -DCMAKE_INSTALL_PREFIX=/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake .
-make
-make install
+make -C build_asmjs
+make install -C build_asmjs
 cd ..
 ```
