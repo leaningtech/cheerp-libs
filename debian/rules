@@ -4,8 +4,8 @@
 	dh $@
 
 override_dh_auto_configure:
-	cmake -S system -B system/build_genericjs -DCMAKE_INSTALL_PREFIX=/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake .
-	cmake -S system -B system/build_asmjs -DCMAKE_INSTALL_PREFIX=/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake .
+	cmake -S system -B system/build_genericjs -DCMAKE_INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake .
+	cmake -S system -B system/build_asmjs -DCMAKE_INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake .
 
 override_dh_auto_build:
 	make -B -C webgles
@@ -20,5 +20,5 @@ override_dh_auto_install:
 	make -C wasm install INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 	make -C stdlibs install INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 	make -C stdlibs install_asmjs INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
-	make -C system/build_genericjs install INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
-	make -C system/build_asmjs install INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
+	make -C system/build_genericjs install
+	make -C system/build_asmjs install

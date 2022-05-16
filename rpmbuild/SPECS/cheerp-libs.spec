@@ -19,8 +19,8 @@ combination of JavaScript, WebAssembly and Asm.js from a single C++ codebase.
 %prep
 %autosetup
 
-cmake -S system -B system/build_genericjs -DCMAKE_INSTALL_PREFIX=/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake .
-cmake -S system -B system/build_asmjs -DCMAKE_INSTALL_PREFIX=/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake .
+cmake -S system -B system/build_genericjs -DCMAKE_INSTALL_PREFIX=%{buildroot}/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake .
+cmake -S system -B system/build_asmjs -DCMAKE_INSTALL_PREFIX=%{buildroot}/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake .
 
 %build
 make -C webgles CHEERP_PREFIX=/opt/cheerp
@@ -35,8 +35,8 @@ mkdir -p %{buildroot}/opt/cheerp/lib/asmjs
 make -C webgles install INSTALL_PREFIX=%{buildroot}/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 make -C wasm install INSTALL_PREFIX=%{buildroot}/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 make -C stdlibs install INSTALL_PREFIX=%{buildroot}/opt/cheerp CHEERP_PREFIX=/opt/cheerp
-make -C system/build_genericjs install INSTALL_PREFIX=%{buildroot}/opt/cheerp CHEERP_PREFIX=/opt/cheerp
-make -C system/build_asmjs install INSTALL_PREFIX=%{buildroot}/opt/cheerp CHEERP_PREFIX=/opt/cheerp
+make -C system/build_genericjs install
+make -C system/build_asmjs install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
