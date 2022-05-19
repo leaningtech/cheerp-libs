@@ -215,7 +215,7 @@ long __syscall_munmap(long a, long length)
 	bool already_unmapped = false;
 	for(Page* p = freePages.head(); p != freePages.end(); p = p->next)
 	{
-		if (addr >= p && addr < p + p->size)
+		if (addr >= p && addr < (char*)p + p->size)
 		{
 			already_unmapped = true;
 			break;
