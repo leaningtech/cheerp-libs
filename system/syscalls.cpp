@@ -1,8 +1,13 @@
 extern "C" {
 #include <sys/uio.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 }
+#include <limits.h>
+#include <errno.h>
 #include <ctime>
+#include <cstdint>
+#include <cassert>
 #include <cheerp/client.h>
 
 extern "C" {
@@ -14,6 +19,11 @@ __attribute__((cheerp_asmjs)) char* volatile _heapStart = (char*)0xdeadbeef;
 __attribute__((cheerp_asmjs)) char* volatile _heapEnd = (char*)0xdeadbeef;
 
 __attribute__((cheerp_asmjs)) char* _heapCur = 0;
+
+static void set_errno(int v)
+{
+	errno = v;
+}
 
 long __syscall_ioctl(long fd, long req, void* arg)
 {
@@ -35,32 +45,226 @@ long __syscall_ioctl(long fd, long req, void* arg)
 	}
 	return -1;
 }
-long __syscall_mmap2(long a1, long a2, long a3, long a4, long a5, long a6)
+
+struct
+[[cheerp::wasm]]
+Page {
+	size_t size;
+	Page* next;
+	Page* prev;
+
+	void init(size_t s)
+	{
+		size = s;
+		next = nullptr;
+		prev = nullptr;
+	}
+	void clear()
+	{
+		init(0);
+	}
+	Page* split(size_t amount)
+	{
+		assert(amount <= size && "requesting amount greater than size");
+		Page* newthis = nullptr;
+		if (amount < size)
+		{
+			newthis = reinterpret_cast<Page*>(reinterpret_cast<char*>(this)+amount);
+			newthis->init(size-amount);
+		}
+		clear();
+		return newthis;
+	}
+};
+
+struct
+[[cheerp::wasm]]
+PageList {
+	Page _end{0, &_end, &_end};
+
+	Page* end()
+	{
+		return &_end;
+	}
+	Page* head()
+	{
+		return end()->next;
+	}
+	Page* lower_bound(size_t size)
+	{
+		for(Page* p = head(); p != end(); p = p->next)
+		{
+			if (p->size >= size)
+				return p->prev;
+		}
+		return end();
+	}
+	void remove(Page* p)
+	{
+		p->prev->next = p->next;
+		p->next->prev = p->prev;
+	}
+	bool try_merge(Page* toMerge)
+	{
+		for(Page* p = head(); p != end(); p = p->next)
+		{
+			char* pStart = reinterpret_cast<char*>(p);
+			char* pEnd = pStart + p->size;
+			char* toMergeStart = reinterpret_cast<char*>(toMerge);
+			char* toMergeEnd = toMergeStart + toMerge->size;
+			if (toMergeEnd == pStart || toMergeStart == pEnd)
+			{
+				remove(p);
+				Page* merged = reinterpret_cast<Page*>(pStart < toMergeStart ? pStart : toMergeStart);
+				merged->init(p->size + toMerge->size);
+				do_insert(merged);
+				return true;
+			}
+		}
+		return false;
+	}
+	void do_insert(Page* p)
+	{
+		Page* insertPt = lower_bound(p->size);
+		p->next = insertPt;
+		p->prev = insertPt->prev;
+		p->prev->next= p;
+		insertPt->prev = p;
+	}
+	void insert(Page* p)
+	{
+		if (try_merge(p))
+			return;
+		do_insert(p);
+	}
+};
+
+[[cheerp::wasm]]
+static char* mmapStart = 0;
+[[cheerp::wasm]]
+static char* mmapEnd = 0;
+[[cheerp::wasm]]
+static PageList freePages;
+
+#define DO_ALIGN(x) ((typeof (x))((((uintptr_t)x) + PAGE_SIZE-1) & ~(PAGE_SIZE-1)))
+#define ASSERT_ALIGNED(x) (assert(x==DO_ALIGN(x)&&"address is not aligned to wasm page size"))
+#define ADDR_TO_PAGE(x) ((uintptr_t)x / PAGE_SIZE);
+#define PAGE_TO_ADDR(x) ((char*)(x * PAGE_SIZE));
+[[cheerp::wasm]]
+static long mmap_new(long length)
 {
-	return -1;
+	// Initialize data structures
+	if (mmapStart == 0)
+	{
+		// Align to page size
+		mmapStart = DO_ALIGN(_heapStart);
+		// This is already aligned
+		mmapEnd = _heapEnd;
+
+		if (mmapStart != mmapEnd)
+		{
+			Page* p = reinterpret_cast<Page*>(mmapStart);
+			p->init(mmapEnd - mmapStart);
+			freePages.insert(p);
+		}
+	}
+
+	Page* p = freePages.lower_bound(length)->next;
+	if (p != freePages.end())
+	{
+		freePages.remove(p);
+		Page* rest = p->split(length);
+		if (rest)
+			freePages.insert(rest);
+		return reinterpret_cast<long>(p);
+	}
+
+	int res = __builtin_cheerp_grow_memory(length);
+	if (res == -1)
+	{
+		set_errno(ENOMEM);
+		return -1;
+	}
+	char* ret = mmapEnd;
+	mmapEnd += length;
+
+	return reinterpret_cast<long>(ret);
 }
 
+[[cheerp::wasm]]
+long __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
+{
+	ASSERT_ALIGNED(addr);
+	ASSERT_ALIGNED(length);
+	assert(fd == -1 && "mmapping files is unsupported");
+
+	// TODO handle flags
+	return mmap_new(length);
+}
+
+[[cheerp::wasm]]
+long __syscall_munmap(long a, long length)
+{
+	void* addr = reinterpret_cast<void*>(a);
+	ASSERT_ALIGNED(addr);
+	ASSERT_ALIGNED(length);
+	assert(addr >= mmapStart && "unmapping address below mmapped range");
+	assert(addr < mmapEnd && "unmapping address above mmapped range");
+#if !defined(NDEBUG)
+	bool already_unmapped = false;
+	for(Page* p = freePages.head(); p != freePages.end(); p = p->next)
+	{
+		if (addr >= p && addr < p + p->size)
+		{
+			already_unmapped = true;
+			break;
+		}
+	}
+	assert(!already_unmapped && "address already unmapped");
+#endif
+	Page* p = reinterpret_cast<Page*>(addr);
+	p->init(length);
+	freePages.insert(p);
+	return 0;
+}
+
+[[cheerp::wasm]]
+long __syscall_madvise(long a, long length, long advice)
+{
+	ASSERT_ALIGNED(a);
+	ASSERT_ALIGNED(length);
+	assert((void*)a >= mmapStart && "madvise address below mmapped range");
+	assert((void*)a < mmapEnd && "madvise address above mmapped range");
+	if (advice != MADV_DONTNEED)
+	{
+		set_errno(EINVAL);
+		return -1;
+	}
+	uint64_t* addr = reinterpret_cast<uint64_t*>(a);
+	uint64_t* end = reinterpret_cast<uint64_t*>(a+length);
+	for(;addr < end; addr++)
+	{
+		*addr = 0;
+	}
+	return 0;
+}
+
+[[cheerp::wasm]]
 long __syscall_brk(void* newaddr)
 {
+	static char* brkEnd = nullptr;
+	if (!brkEnd)
+	{
+		brkEnd = DO_ALIGN(_heapStart);
+	}
 	char* a1 = reinterpret_cast<char*>(newaddr);
 	if (a1 < _heapStart)
 	{
 		return reinterpret_cast<long>(_heapStart);
 	}
-	if (a1 <= _heapEnd)
-	{
-		_heapCur = a1;
-	}
-	else
-	{
-		int res = __builtin_cheerp_grow_memory(a1-_heapEnd);
-		if (res != -1)
-		{
-			_heapEnd += res;
-			_heapCur = a1 < _heapEnd ? a1 : _heapEnd;
-		}
-	}
-	return reinterpret_cast<long>(_heapCur);
+	if (a1 >= brkEnd)
+		return -1;
+	return reinterpret_cast<long>(newaddr);
 }
 
 [[cheerp::genericjs]]
