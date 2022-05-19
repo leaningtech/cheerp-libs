@@ -169,9 +169,10 @@ static long mmap_new(long length)
 		}
 	}
 
-	Page* p = freePages.lower_bound(length)->next;
-	if (p != freePages.end())
+	Page* p = freePages.lower_bound(length);
+	if (p != freePages.end() && p->next != freePages.end())
 	{
+		p = p->next;
 		freePages.remove(p);
 		Page* rest = p->split(length);
 		if (rest)
