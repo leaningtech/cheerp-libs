@@ -192,7 +192,6 @@ static long mmap_new(long length)
 	return reinterpret_cast<long>(ret);
 }
 
-[[cheerp::wasm]]
 long __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
 {
 	ASSERT_ALIGNED(addr);
@@ -204,7 +203,7 @@ long __syscall_mmap2(long addr, long length, long prot, long flags, long fd, lon
 }
 
 [[cheerp::wasm]]
-long __syscall_munmap(long a, long length)
+static long do_munmap(long a, long length)
 {
 	void* addr = reinterpret_cast<void*>(a);
 	ASSERT_ALIGNED(addr);
@@ -227,6 +226,11 @@ long __syscall_munmap(long a, long length)
 	p->init(length);
 	freePages.insert(p);
 	return 0;
+}
+
+long __syscall_munmap(long a, long length)
+{
+	return do_munmap(a, length);
 }
 
 [[cheerp::wasm]]
