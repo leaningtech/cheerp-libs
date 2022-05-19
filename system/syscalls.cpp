@@ -95,7 +95,7 @@ PageList {
 		for(Page* p = head(); p != end(); p = p->next)
 		{
 			if (p->size >= size)
-				return p->prev;
+				return p;
 		}
 		return end();
 	}
@@ -170,9 +170,8 @@ static long mmap_new(long length)
 	}
 
 	Page* p = freePages.lower_bound(length);
-	if (p != freePages.end() && p->next != freePages.end())
+	if (p != freePages.end())
 	{
-		p = p->next;
 		freePages.remove(p);
 		Page* rest = p->split(length);
 		if (rest)
