@@ -234,6 +234,44 @@ long __syscall_munmap(long a, long length)
 }
 
 [[cheerp::wasm]]
+static long do_mremap(long a, long old_len, long new_len)
+{
+	char* addr = reinterpret_cast<char*>(a);
+	ASSERT_ALIGNED(addr);
+	ASSERT_ALIGNED(old_len);
+	ASSERT_ALIGNED(new_len);
+	assert(addr >= mmapStart && "remapping address below mmapped range");
+	assert(addr < mmapEnd && "remapping address above mmapped range");
+
+	Page* candidate = nullptr;
+	for(Page* p = freePages.head(); p != freePages.end(); p = p->next)
+	{
+		if (addr + old_len == (char*)p)
+		{
+			candidate = p;
+			break;
+		}
+	}
+	if (candidate && candidate->size + old_len >= new_len)
+	{
+		freePages.remove(candidate);
+		Page* rest = candidate->split(new_len-old_len);
+		if (rest)
+			freePages.insert(rest);
+		return a;
+	}
+	// TODO: if MREMAP_MAYMOVE is passed as a flag, we should move the mapping.
+	// this is not necessary for musl's malloc but it may be for other stuff
+	set_errno(ENOMEM);
+	return -1;
+}
+
+long __syscall_mremap(long old_addr, long old_len, long new_len, long flags, long new_addr)
+{
+	return do_mremap(old_addr, old_len, new_len);
+}
+
+[[cheerp::wasm]]
 long __syscall_madvise(long a, long length, long advice)
 {
 	ASSERT_ALIGNED(a);
