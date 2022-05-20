@@ -8,6 +8,7 @@ extern "C" {
 #include <ctime>
 #include <cstdint>
 #include <cassert>
+#include <vector>
 #include <cheerp/client.h>
 
 extern "C" {
@@ -272,24 +273,13 @@ long __syscall_brk(void* newaddr)
 }
 
 [[cheerp::genericjs]]
-void print_stream(const char* buf, size_t len, bool stream)
+void print(const char* buf, size_t len)
 {
-	static client::TextDecoder* td = new client::TextDecoder("utf-8");
-	static client::String* toWrite = new client::String();
-
-	client::Uint8Array* arr = cheerp::MakeTypedArray<client::Uint8Array>(buf, len);
-	client::TextDecodeOptions* opts = new client::TextDecodeOptions();
-	opts->set_stream(stream);
-	client::String* s = td->decode(arr, opts);
-	toWrite = toWrite->concat(s);
-	if (!stream)
-	{
-		uint32_t l = toWrite->get_length();
-		if (toWrite->charCodeAt(l-1) == 10)
-			toWrite = toWrite->substr(0, l -1);
-		client::console.log(toWrite);
-		toWrite = new client::String();
-	}
+	auto* toWrite = client::String::fromUtf8(buf, len);
+	uint32_t l = toWrite->get_length();
+	if (toWrite->charCodeAt(l-1) == 10)
+		toWrite = toWrite->substr(0, l -1);
+	client::console.log(toWrite);
 }
 
 static const char* get_base(const iovec* io)
@@ -300,13 +290,17 @@ static const char* get_base(const iovec* io)
 long __syscall_writev(long fd, const iovec* ios, long len)
 {
 	long __ret = 0;
+	std::vector<char> buf;
 	for (int i = 0; i < len; i++)
 	{
 		if (ios[i].iov_len == 0)
 			continue;
-		print_stream(get_base(&ios[i]), ios[i].iov_len, i < len - 1);
+		char* begin = (char*)ios[i].iov_base;
+		char* end = begin + ios[i].iov_len;
+		buf.insert(buf.end(), begin, end);
 		__ret += ios[i].iov_len;
 	}
+	print(buf.data(), buf.size());
 	return __ret;
 }
 
