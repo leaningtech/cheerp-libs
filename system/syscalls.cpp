@@ -26,6 +26,12 @@ static void set_errno(int v)
 	errno = v;
 }
 
+long __syscall_open(long pathname, int flags, ...)
+{
+	errno = EACCES;
+	return -1;
+}
+
 long __syscall_ioctl(long fd, long req, void* arg)
 {
 	switch(req)
