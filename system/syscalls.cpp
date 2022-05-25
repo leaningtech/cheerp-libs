@@ -353,16 +353,46 @@ double offsetInMilliseconds()
 {
 	return (new client::Date())->getTimezoneOffset() * -60.0 * 1000.0;
 }
+[[cheerp::genericjs]]
+double performanceNow()
+{
+	return client::performance.now();
+}
 long __syscall_clock_gettime64(int clock_id, struct timespec* tp)
 {
-	if (tp)
+	if (!tp)
+		return 0;
+	switch (clock_id)
 	{
-		// 'now' is in milliseconds
-		double now = cheerp::date_now();
-		if (clock_id == CLOCK_REALTIME)
+		case CLOCK_REALTIME:
+		{
+			// 'now' is in milliseconds
+			double now = cheerp::date_now();
 			now += offsetInMilliseconds();
-		tp->tv_sec = now / 1000;
-		tp->tv_nsec = (now-(tp->tv_sec*1000.0))*1000.0*1000.0;
+			tp->tv_sec = now / 1000;
+			tp->tv_nsec = (now-(tp->tv_sec*1000.0))*1000.0*1000.0;
+			break;
+		}
+		case CLOCK_MONOTONIC:
+		{
+			// 'now' is in milliseconds
+			double now = cheerp::date_now();
+			tp->tv_sec = now / 1000;
+			tp->tv_nsec = (now-(tp->tv_sec*1000.0))*1000.0*1000.0;
+			break;
+		}
+		case CLOCK_PROCESS_CPUTIME_ID:
+		{
+			// 'now' is in milliseconds
+			double now = performanceNow();
+			tp->tv_sec = now / 1000;
+			tp->tv_nsec = (now-(tp->tv_sec*1000.0))*1000.0*1000.0;
+			break;
+		}
+		default:
+		{
+			return -1;
+		}
 	}
 	return 0;
 }
