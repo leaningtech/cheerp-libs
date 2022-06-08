@@ -68,7 +68,13 @@ Page {
 	}
 	void clear()
 	{
-		init(0);
+		uint64_t* addr = reinterpret_cast<uint64_t*>(this);
+		char* a = reinterpret_cast<char*>(addr);
+		uint64_t* end = reinterpret_cast<uint64_t*>(a+size);
+		for(;addr < end; addr++)
+		{
+			*addr = 0;
+		}
 	}
 	Page* split(size_t amount)
 	{
@@ -79,6 +85,7 @@ Page {
 			newthis = reinterpret_cast<Page*>(reinterpret_cast<char*>(this)+amount);
 			newthis->init(size-amount);
 		}
+		size = amount;
 		clear();
 		return newthis;
 	}
