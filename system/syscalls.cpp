@@ -11,6 +11,7 @@ extern "C" {
 #include <vector>
 #include <cheerp/client.h>
 
+#define WEAK __attribute__((weak))
 extern "C" {
 
 
@@ -26,13 +27,13 @@ static void set_errno(int v)
 	errno = v;
 }
 
-long __syscall_open(long pathname, int flags, ...)
+long WEAK __syscall_open(long pathname, int flags, ...)
 {
 	errno = EACCES;
 	return -1;
 }
 
-long __syscall_ioctl(long fd, long req, void* arg)
+long WEAK __syscall_ioctl(long fd, long req, void* arg)
 {
 	switch(req)
 	{
@@ -205,7 +206,7 @@ static long mmap_new(long length)
 	return reinterpret_cast<long>(ret);
 }
 
-long __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
+long WEAK __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
 {
 	ASSERT_ALIGNED(addr);
 	ASSERT_ALIGNED(length);
@@ -241,7 +242,7 @@ static long do_munmap(long a, long length)
 	return 0;
 }
 
-long __syscall_munmap(long a, long length)
+long WEAK __syscall_munmap(long a, long length)
 {
 	return do_munmap(a, length);
 }
@@ -279,13 +280,13 @@ static long do_mremap(long a, long old_len, long new_len)
 	return -1;
 }
 
-long __syscall_mremap(long old_addr, long old_len, long new_len, long flags, long new_addr)
+long WEAK __syscall_mremap(long old_addr, long old_len, long new_len, long flags, long new_addr)
 {
 	return do_mremap(old_addr, old_len, new_len);
 }
 
 [[cheerp::wasm]]
-long __syscall_madvise(long a, long length, long advice)
+long WEAK __syscall_madvise(long a, long length, long advice)
 {
 	ASSERT_ALIGNED(a);
 	ASSERT_ALIGNED(length);
@@ -306,7 +307,7 @@ long __syscall_madvise(long a, long length, long advice)
 }
 
 [[cheerp::wasm]]
-long __syscall_brk(void* newaddr)
+long WEAK __syscall_brk(void* newaddr)
 {
 	static char* brkEnd = nullptr;
 	if (!brkEnd)
@@ -338,7 +339,7 @@ static const char* get_base(const iovec* io)
 	return static_cast<const char*>(io->iov_base);
 }
 
-long __syscall_writev(long fd, const iovec* ios, long len)
+long WEAK __syscall_writev(long fd, const iovec* ios, long len)
 {
 	long __ret = 0;
 	std::vector<char> buf;
@@ -365,7 +366,7 @@ double performanceNow()
 {
 	return client::performance.now();
 }
-long __syscall_clock_gettime64(int clock_id, struct timespec* tp)
+long WEAK __syscall_clock_gettime64(int clock_id, struct timespec* tp)
 {
 	if (!tp)
 		return 0;
