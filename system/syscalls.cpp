@@ -27,7 +27,7 @@ static void set_errno(int v)
 	errno = v;
 }
 
-long WEAK __syscall_open(long pathname, int flags, ...)
+long WEAK __syscall_open(const char* pathname, int flags, ...)
 {
 	errno = EACCES;
 	return -1;
