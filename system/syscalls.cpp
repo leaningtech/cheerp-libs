@@ -87,7 +87,6 @@ Page {
 			newthis->init(size-amount);
 		}
 		size = amount;
-		clear();
 		return newthis;
 	}
 };
