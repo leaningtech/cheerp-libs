@@ -409,5 +409,10 @@ long WEAK __syscall_futex(int* uaddr, int futex_op, uint32_t val, struct timespe
 	return 0;
 }
 
+int WEAK __syscall_close(int fd)
+{
+	return 0;
+}
+
 }
 
