@@ -404,6 +404,10 @@ long WEAK __syscall_clock_gettime64(int clock_id, struct timespec* tp)
 	return 0;
 }
 
+long WEAK __syscall_futex(int* uaddr, int futex_op, uint32_t val, struct timespec *timeout, uint32_t *uaddr2, uint32_t val3)
+{
+	return 0;
+}
 
 }
 
