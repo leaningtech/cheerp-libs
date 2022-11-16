@@ -208,7 +208,7 @@ static long mmap_new(long length)
 long WEAK __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
 {
 	ASSERT_ALIGNED(addr);
-	ASSERT_ALIGNED(length);
+	length = DO_ALIGN(length);
 	assert(fd == -1 && "mmapping files is unsupported");
 
 	// TODO handle flags
@@ -220,7 +220,7 @@ static long do_munmap(long a, long length)
 {
 	void* addr = reinterpret_cast<void*>(a);
 	ASSERT_ALIGNED(addr);
-	ASSERT_ALIGNED(length);
+	length = DO_ALIGN(length);
 	assert(addr >= mmapStart && "unmapping address below mmapped range");
 	assert(addr < mmapEnd && "unmapping address above mmapped range");
 #if !defined(NDEBUG)
@@ -251,8 +251,8 @@ static long do_mremap(long a, long old_len, long new_len)
 {
 	char* addr = reinterpret_cast<char*>(a);
 	ASSERT_ALIGNED(addr);
-	ASSERT_ALIGNED(old_len);
-	ASSERT_ALIGNED(new_len);
+	old_len = DO_ALIGN(old_len);
+	new_len = DO_ALIGN(new_len);
 	assert(addr >= mmapStart && "remapping address below mmapped range");
 	assert(addr < mmapEnd && "remapping address above mmapped range");
 
