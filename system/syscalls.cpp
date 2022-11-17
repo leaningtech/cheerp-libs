@@ -414,5 +414,11 @@ int WEAK __syscall_close(int fd)
 	return 0;
 }
 
+[[cheerp::wasm]]
+int WEAK __syscall_mprotect(long addr, size_t len, int prot)
+{
+	return 0;
+}
+
 }
 
