@@ -9,7 +9,7 @@ libGLESv2.bc: webgles.bc webglesutils.bc
 	${CHEERP_PREFIX}/bin/llvm-link -o $@ $^
 
 %.bc: %.cpp
-	${CHEERP_PREFIX}/bin/clang -c $^ -o $@ -target cheerp
+	${CHEERP_PREFIX}/bin/clang -c $^ -o $@ -target cheerp -O3
 
 install_headers: webgles.h gl2.h
 	mkdir -p ${INSTALL_PREFIX}/include/GLES2/
