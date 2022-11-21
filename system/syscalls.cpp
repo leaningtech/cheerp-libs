@@ -285,7 +285,7 @@ long WEAK __syscall_mremap(long old_addr, long old_len, long new_len, long flags
 }
 
 [[cheerp::wasm]]
-long WEAK __syscall_madvise(long a, long length, long advice)
+long WEAK __syscall_madvise(void* a, long length, long advice)
 {
 	ASSERT_ALIGNED(a);
 	ASSERT_ALIGNED(length);
@@ -297,7 +297,7 @@ long WEAK __syscall_madvise(long a, long length, long advice)
 		return -1;
 	}
 	uint64_t* addr = reinterpret_cast<uint64_t*>(a);
-	uint64_t* end = reinterpret_cast<uint64_t*>(a+length);
+	uint64_t* end = reinterpret_cast<uint64_t*>((char*)a+length);
 	for(;addr < end; addr++)
 	{
 		*addr = 0;
