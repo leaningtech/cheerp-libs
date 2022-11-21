@@ -19,8 +19,8 @@ combination of JavaScript, WebAssembly and Asm.js from a single C++ codebase.
 %prep
 %autosetup
 
-cmake -S system -B system/build_genericjs -DCMAKE_INSTALL_PREFIX=%{buildroot}/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake .
-cmake -S system -B system/build_asmjs -DCMAKE_INSTALL_PREFIX=%{buildroot}/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake .
+cmake -S system -B system/build_genericjs -DCMAKE_INSTALL_PREFIX=%{buildroot}/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpToolchain.cmake -DCMAKE_BUILD_TYPE=Release.
+cmake -S system -B system/build_asmjs -DCMAKE_INSTALL_PREFIX=%{buildroot}/opt/cheerp -DCMAKE_TOOLCHAIN_FILE=/opt/cheerp/share/cmake/Modules/CheerpWasmToolchain.cmake -DCMAKE_BUILD_TYPE=Release .
 
 %build
 make -C webgles CHEERP_PREFIX=/opt/cheerp
