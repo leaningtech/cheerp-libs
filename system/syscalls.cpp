@@ -199,10 +199,25 @@ static long mmap_new(long length)
 		set_errno(ENOMEM);
 		return -1;
 	}
-	char* ret = mmapEnd;
-	mmapEnd += length;
+	Page* newPage = reinterpret_cast<Page*>(mmapEnd);
+	mmapEnd += res;
 
-	return reinterpret_cast<long>(ret);
+	// The memory will have grown by 64k, but the request may be smaller.
+	// We put the new memory into the free pages, so it can possibly merge
+	// with an existing chunk.
+	newPage->init(res);
+	freePages.insert(newPage);
+
+	// Now we find a page with the requested length.
+	// If there's any left-over, we split the memory and put the rest into the free pages.
+	p = freePages.lower_bound(length);
+	assert(p != freePages.end());
+	freePages.remove(p);
+	Page* rest = p->split(length);
+	if (rest)
+		freePages.insert(rest);
+
+	return reinterpret_cast<long>(p);
 }
 
 long WEAK __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
