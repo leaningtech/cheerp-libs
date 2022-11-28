@@ -34,6 +34,34 @@ extern "C"
 
 		unsigned char* srcEnd = src8+len;
 
+		switch (len)
+		{
+			case 0:
+				return dst;
+			case 1:
+			case 2:
+			case 3:
+				*dst8 = *src8;
+				if (len >= 2)
+				{
+					// Write second and last byte (potentially overlapping)
+					*(dst8+1) = *(src8+1);
+					*(dst8+len-1) = *(src8+len-1);
+				}
+				return dst;
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+				// Copy [0..3] and [len-4..len-1] ranges, potentially overlapping
+				*((unsigned int*)dst8) = *((unsigned int*)src8);
+				*((unsigned int*)(dst8+len-4)) = *((unsigned int*)(src8+len-4));
+				return dst;
+			default:
+				break;
+		}
+
 		// Unroll for 64 bytes at a time
 		while(int(src8) <= int(srcEnd - 64))
 		{
@@ -48,20 +76,15 @@ extern "C"
 			dst8+=64;
 			src8+=64;
 		}
-		// Loop 8 bytes at a time
-		while(int(src8) <= int(srcEnd - 8))
+		// Loop 8 bytes at a time (leaving up to 8 bytes left to be done)
+		while(int(src8) < int(srcEnd - 8))
 		{
 			*((unsigned long long*)dst8) = *((unsigned long long*)src8);
 			dst8+=8;
 			src8+=8;
 		}
-		// Byte loop to finish the copy
-		while(src8 != srcEnd)
-		{
-			*dst8 = *src8;
-			dst8++;
-			src8++;
-		}
+		// len is greater than 8, so we blindly copy [len-8..len-1] bytes in a 64 bit load + 64 bit store
+		*((unsigned long long*)(((unsigned char*)dst) + len-8)) = *((unsigned long long*)(((unsigned char*)src) + len-8));
 		return dst;
 	}
 
