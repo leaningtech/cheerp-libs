@@ -91,10 +91,39 @@ extern "C"
 	void *memset(void *dst, int c, size_t len)
 	{
 		unsigned char cu = c;
-		unsigned int c32 = (cu<<0) | (cu<<8) | (cu<<16) | (cu<<24);
+		// -1 / 255 -> 0x0001000100010001, then multiplied for something between 0 and 255 will not overlow to higher 'lanes'
+		unsigned int c32 = (((unsigned int)-1)/255) * cu;
 		unsigned long long c64 = ((unsigned long long)(c32)<<0) | ((unsigned long long)(c32)<<32);
 		unsigned char* dst8 = (unsigned char*)dst;
 		unsigned char* dstEnd = dst8 + len;
+
+		switch (len)
+		{
+			case 0:
+				return dst;
+			case 1:
+			case 2:
+			case 3:
+				*dst8 = cu;
+				if (len >= 2)
+				{
+					// Write second and last byte (potentially overlapping)
+					*(dst8+1) = cu;
+					*(dst8+len-1) = cu;
+				}
+				return dst;
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
+				// Write [0..3] and [len-4..len-1] ranges, potentially overlapping
+				*((unsigned int*)dst8) = c32;
+				*((unsigned int*)(dst8+len-4)) = c32;
+				return dst;
+			default:
+				break;
+		}
 		while(int(dst8) < int(dstEnd - 64))
 		{
 			*((unsigned long long*)dst8) = c64;
