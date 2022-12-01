@@ -142,12 +142,8 @@ extern "C"
 			*((unsigned long long*)dst8) = c64;
 			dst8+=8;
 		}
-		// Byte loop to finish the copy
-		while(dst8 != dstEnd)
-		{
-			*dst8 = cu;
-			dst8++;
-		}
+		// len is greater than 8, so we blindly write [len-8..len-1] bytes in a single 64 bit store
+		*((unsigned long long*)(((unsigned char*)dst) + len-8)) = c64;
 		return dst;
 	}
 }
