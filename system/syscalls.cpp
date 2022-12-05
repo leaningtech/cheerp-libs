@@ -8,7 +8,6 @@ extern "C" {
 #include <ctime>
 #include <cstdint>
 #include <cassert>
-#include <vector>
 #include <cheerp/client.h>
 
 #define WEAK __attribute__((weak))
@@ -338,36 +337,146 @@ long WEAK __syscall_brk(void* newaddr)
 	return reinterpret_cast<long>(newaddr);
 }
 
-[[cheerp::genericjs]]
-void print(const char* buf, size_t len)
+namespace {
+
+class [[cheerp::genericjs]] CheerpStringBuilder
 {
-	auto* toWrite = client::String::fromUtf8(buf, len);
-	uint32_t l = toWrite->get_length();
-	if (toWrite->charCodeAt(l-1) == 10)
-		toWrite = toWrite->substr(0, l -1);
-	client::console.log(toWrite);
+private:
+	client::String* out;
+	void outputCodepoint(unsigned int codepoint);
+public:
+	// Keep codepoint and remaining updated while encountering char ch
+	// Potentially calls (either 0 or 1 times) outputCodepoint to populate out
+	void processChar(unsigned int& codepoint, unsigned int& remaining, unsigned char ch);
+	client::String* getString()
+	{
+		return out;
+	}
+	void setString(client::String* a)
+	{
+		out = a;
+	}
+};
+
+void CheerpStringBuilder::outputCodepoint(unsigned int codepoint)
+{
+	if (codepoint <= 0xffff)
+	{
+		if (codepoint)
+			out = out->concat(client::String::fromCharCode(codepoint));
+	}
+	else
+	{
+		// surrogate pair
+		codepoint -= 0x10000;
+		unsigned int highSurrogate = (codepoint >> 10) + 0xd800;
+		unsigned int lowSurrogate = (codepoint & 0x3ff) + 0xdc00;
+		out = out->concat(client::String::fromCharCode(highSurrogate));
+		out = out->concat(client::String::fromCharCode(lowSurrogate));
+	}
 }
 
-static const char* get_base(const iovec* io)
+void CheerpStringBuilder::processChar(unsigned int& codepoint, unsigned int& remaining, unsigned char ch)
 {
-	return static_cast<const char*>(io->iov_base);
+	if (ch < 192)
+	{
+		// Continuation bytes
+		if (remaining > 0)
+		{
+#ifndef NDEBUG
+			assert((ch & 192) == 128);
+			assert(remaining);
+#endif
+			codepoint = codepoint << 6 | (ch & 0x3f);
+			remaining--;
+			// If there are more, wait
+			if (remaining > 0)
+				return;
+			// Otherwise, output the codepoint
+		}
+		// We should be in ASCII range
+		else
+		{
+#ifndef NDEBUG
+			assert(ch < 128u);
+#endif
+			codepoint = ch;
+		}
+
+		// Output the current codepoint
+		outputCodepoint(codepoint);
+	}
+	else
+	{
+#ifndef NDEBUG
+		assert(remaining == 0);
+#endif
+		unsigned int mask;
+		// Start of 2-bytes sequence
+		if (ch <= 0xdf)
+		{
+			remaining = 1;
+			mask = 0x1f;
+		}
+		// Start of 3-bytes sequence
+		else if (ch <= 0xef)
+		{
+			remaining = 2;
+			mask = 0x0f;
+		}
+		// Start of 4-bytes sequence
+		else
+		{
+			remaining = 3;
+			mask = 0x07;
+		}
+
+		codepoint = ch & mask;
+	}
+}
+
+} //unnamed namespace
+
+[[cheerp::genericjs]]
+static long do_syscall_writev(const iovec* ios, long len)
+{
+	static client::String* curr = new client::String();
+	static unsigned int codepoint = 0;
+	static unsigned int remaining = 0;
+
+	CheerpStringBuilder builder;
+	builder.setString(curr);
+
+	long __ret = 0;
+	for (int i=0; i < len; i++)
+	{
+		if (ios[i].iov_len == 0)
+			continue;
+
+		int curr_len = ios[i].iov_len;
+		__ret += curr_len;
+		unsigned char* begin = (unsigned char*)ios[i].iov_base;
+		for (int j=0; j<curr_len; j++)
+		{
+			builder.processChar(codepoint, remaining, begin[j]);
+		}
+	}
+
+	client::TArray<client::String>* arr = builder.getString()->split("\n");
+	const int L = arr->get_length();
+	for (int i=0; i+1<L; i++)
+	{
+		client::console.log((*arr)[i]);
+	}
+
+	// Last, potentially empty, segment left for next iteration
+	curr = (*arr)[L-1];
+	return __ret;
 }
 
 long WEAK __syscall_writev(long fd, const iovec* ios, long len)
 {
-	long __ret = 0;
-	std::vector<char> buf;
-	for (int i = 0; i < len; i++)
-	{
-		if (ios[i].iov_len == 0)
-			continue;
-		char* begin = (char*)ios[i].iov_base;
-		char* end = begin + ios[i].iov_len;
-		buf.insert(buf.end(), begin, end);
-		__ret += ios[i].iov_len;
-	}
-	print(buf.data(), buf.size());
-	return __ret;
+	return do_syscall_writev(ios, len);
 }
 
 [[cheerp::genericjs]]
