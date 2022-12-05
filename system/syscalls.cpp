@@ -117,24 +117,39 @@ PageList {
 		p->prev->next = p->next;
 		p->next->prev = p->prev;
 	}
-	bool try_merge(Page* toMerge)
+	Page* try_merge(Page* toMerge)
 	{
+		// Try to merge with adiacent pages, return resulting page (potentially the same as input)
+		char* toMergeStart = reinterpret_cast<char*>(toMerge);
+		char* toMergeEnd = toMergeStart + toMerge->size;
+		Page* low = nullptr;
+		Page* high = nullptr;
 		for(Page* p = head(); p != end(); p = p->next)
 		{
 			char* pStart = reinterpret_cast<char*>(p);
 			char* pEnd = pStart + p->size;
-			char* toMergeStart = reinterpret_cast<char*>(toMerge);
-			char* toMergeEnd = toMergeStart + toMerge->size;
-			if (toMergeEnd == pStart || toMergeStart == pEnd)
-			{
-				remove(p);
-				Page* merged = reinterpret_cast<Page*>(pStart < toMergeStart ? pStart : toMergeStart);
-				merged->init(p->size + toMerge->size);
-				do_insert(merged);
-				return true;
-			}
+			if (toMergeEnd == pStart)
+				high = p;
+			else if (pEnd == toMergeStart)
+				low = p;
 		}
-		return false;
+		if (low)
+			remove(low);
+		if (high)
+			remove(high);
+
+		Page* merged = toMerge;
+		size_t size = toMerge->size;
+		if (low)
+		{
+			merged = low;
+			size += low->size;
+		}
+		if (high)
+			size += high->size;
+
+		merged->init(size);
+		return merged;
 	}
 	void do_insert(Page* p)
 	{
@@ -144,11 +159,13 @@ PageList {
 		p->prev->next= p;
 		insertPt->prev = p;
 	}
-	void insert(Page* p)
+	Page* insert(Page* p)
 	{
-		if (try_merge(p))
-			return;
-		do_insert(p);
+		// Look to merge p with adjacent pages
+		Page* merged = try_merge(p);
+		// Insert the resulting page into the free list
+		do_insert(merged);
+		return merged;
 	}
 };
 
@@ -205,13 +222,12 @@ static long mmap_new(long length)
 	// We put the new memory into the free pages, so it can possibly merge
 	// with an existing chunk.
 	newPage->init(res);
-	freePages.insert(newPage);
 
-	// Now we find a page with the requested length.
-	// If there's any left-over, we split the memory and put the rest into the free pages.
-	p = freePages.lower_bound(length);
-	assert(p != freePages.end());
+	// Now we have a page with the requested length.
+	p = freePages.insert(newPage);
 	freePages.remove(p);
+
+	// If there's any left-over, we split the memory and put the rest into the free pages.
 	Page* rest = p->split(length);
 	if (rest)
 		freePages.insert(rest);
