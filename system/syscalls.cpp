@@ -53,304 +53,45 @@ long WEAK __syscall_ioctl(long fd, long req, void* arg)
 	return -1;
 }
 
-struct
-[[cheerp::wasm]]
-Page {
-	size_t size;
-	Page* next;
-	Page* prev;
-
-	void init(size_t s)
-	{
-		size = s;
-		next = nullptr;
-		prev = nullptr;
-	}
-	void clear()
-	{
-		uint64_t* addr = reinterpret_cast<uint64_t*>(this);
-		char* a = reinterpret_cast<char*>(addr);
-		uint64_t* end = reinterpret_cast<uint64_t*>(a+size);
-		for(;addr < end; addr++)
-		{
-			*addr = 0;
-		}
-	}
-	Page* split(size_t amount)
-	{
-		assert(amount <= size && "requesting amount greater than size");
-		Page* newthis = nullptr;
-		if (amount < size)
-		{
-			newthis = reinterpret_cast<Page*>(reinterpret_cast<char*>(this)+amount);
-			newthis->init(size-amount);
-		}
-		size = amount;
-		return newthis;
-	}
-};
-
-struct
-[[cheerp::wasm]]
-PageList {
-	Page _end{0, &_end, &_end};
-
-	Page* end()
-	{
-		return &_end;
-	}
-	Page* head()
-	{
-		return end()->next;
-	}
-	Page* lower_bound(size_t size)
-	{
-		for(Page* p = head(); p != end(); p = p->next)
-		{
-			if (p->size >= size)
-				return p;
-		}
-		return end();
-	}
-	void remove(Page* p)
-	{
-		p->prev->next = p->next;
-		p->next->prev = p->prev;
-	}
-	Page* try_merge(Page* toMerge)
-	{
-		// Try to merge with adiacent pages, return resulting page (potentially the same as input)
-		char* toMergeStart = reinterpret_cast<char*>(toMerge);
-		char* toMergeEnd = toMergeStart + toMerge->size;
-		Page* low = nullptr;
-		Page* high = nullptr;
-		for(Page* p = head(); p != end(); p = p->next)
-		{
-			char* pStart = reinterpret_cast<char*>(p);
-			char* pEnd = pStart + p->size;
-			if (toMergeEnd == pStart)
-				high = p;
-			else if (pEnd == toMergeStart)
-				low = p;
-		}
-		if (low)
-			remove(low);
-		if (high)
-			remove(high);
-
-		Page* merged = toMerge;
-		size_t size = toMerge->size;
-		if (low)
-		{
-			merged = low;
-			size += low->size;
-		}
-		if (high)
-			size += high->size;
-
-		merged->init(size);
-		return merged;
-	}
-	void do_insert(Page* p)
-	{
-		Page* insertPt = lower_bound(p->size);
-		p->next = insertPt;
-		p->prev = insertPt->prev;
-		p->prev->next= p;
-		insertPt->prev = p;
-	}
-	Page* insert(Page* p)
-	{
-		// Look to merge p with adjacent pages
-		Page* merged = try_merge(p);
-		// Insert the resulting page into the free list
-		do_insert(merged);
-		return merged;
-	}
-};
-
-[[cheerp::wasm]]
-static char* mmapStart = 0;
-[[cheerp::wasm]]
-static char* mmapEnd = 0;
-[[cheerp::wasm]]
-static PageList freePages;
-
-#define DO_ALIGN(x) ((typeof (x))((((uintptr_t)x) + PAGE_SIZE-1) & ~(PAGE_SIZE-1)))
-#define ASSERT_ALIGNED(x) (assert(x==DO_ALIGN(x)&&"address is not aligned to wasm page size"))
-#define ADDR_TO_PAGE(x) ((uintptr_t)x / PAGE_SIZE);
-#define PAGE_TO_ADDR(x) ((char*)(x * PAGE_SIZE));
-[[cheerp::wasm]]
-static long mmap_new(long length)
-{
-	// Initialize data structures
-	if (mmapStart == 0)
-	{
-		// Align to page size
-		mmapStart = DO_ALIGN(_heapStart);
-		// This is already aligned
-		mmapEnd = _heapEnd;
-
-		if (mmapStart != mmapEnd)
-		{
-			Page* p = reinterpret_cast<Page*>(mmapStart);
-			p->init(mmapEnd - mmapStart);
-			freePages.insert(p);
-		}
-	}
-
-	Page* p = freePages.lower_bound(length);
-	if (p != freePages.end())
-	{
-		freePages.remove(p);
-		Page* rest = p->split(length);
-		if (rest)
-			freePages.insert(rest);
-		return reinterpret_cast<long>(p);
-	}
-
-	int res = __builtin_cheerp_grow_memory(length);
-	if (res == -1)
-	{
-		set_errno(ENOMEM);
-		return -1;
-	}
-	Page* newPage = reinterpret_cast<Page*>(mmapEnd);
-	mmapEnd += res;
-
-	// The memory will have grown by 64k, but the request may be smaller.
-	// We put the new memory into the free pages, so it can possibly merge
-	// with an existing chunk.
-	newPage->init(res);
-
-	// Now we have a page with the requested length.
-	p = freePages.insert(newPage);
-	freePages.remove(p);
-
-	// If there's any left-over, we split the memory and put the rest into the free pages.
-	Page* rest = p->split(length);
-	if (rest)
-		freePages.insert(rest);
-
-	return reinterpret_cast<long>(p);
-}
-
-long WEAK __syscall_mmap2(long addr, long length, long prot, long flags, long fd, long offset)
-{
-	ASSERT_ALIGNED(addr);
-	length = DO_ALIGN(length);
-	assert(fd == -1 && "mmapping files is unsupported");
-
-	// TODO handle flags
-	return mmap_new(length);
-}
-
-[[cheerp::wasm]]
-static long do_munmap(long a, long length)
-{
-	void* addr = reinterpret_cast<void*>(a);
-	ASSERT_ALIGNED(addr);
-	length = DO_ALIGN(length);
-	assert(addr >= mmapStart && "unmapping address below mmapped range");
-	assert(addr < mmapEnd && "unmapping address above mmapped range");
-#if !defined(NDEBUG)
-	bool already_unmapped = false;
-	for(Page* p = freePages.head(); p != freePages.end(); p = p->next)
-	{
-		if (addr >= p && addr < (char*)p + p->size)
-		{
-			already_unmapped = true;
-			break;
-		}
-	}
-	assert(!already_unmapped && "address already unmapped");
-#endif
-	Page* p = reinterpret_cast<Page*>(addr);
-	p->init(length);
-	freePages.insert(p);
-	return 0;
-}
-
-long WEAK __syscall_munmap(long a, long length)
-{
-	return do_munmap(a, length);
-}
-
-[[cheerp::wasm]]
-static long do_mremap(long a, long old_len, long new_len)
-{
-	char* addr = reinterpret_cast<char*>(a);
-	ASSERT_ALIGNED(addr);
-	old_len = DO_ALIGN(old_len);
-	new_len = DO_ALIGN(new_len);
-	assert(addr >= mmapStart && "remapping address below mmapped range");
-	assert(addr < mmapEnd && "remapping address above mmapped range");
-
-	Page* candidate = nullptr;
-	for(Page* p = freePages.head(); p != freePages.end(); p = p->next)
-	{
-		if (addr + old_len == (char*)p)
-		{
-			candidate = p;
-			break;
-		}
-	}
-	if (candidate && candidate->size + old_len >= new_len)
-	{
-		freePages.remove(candidate);
-		Page* rest = candidate->split(new_len-old_len);
-		if (rest)
-			freePages.insert(rest);
-		return a;
-	}
-	// TODO: if MREMAP_MAYMOVE is passed as a flag, we should move the mapping.
-	// this is not necessary for musl's malloc but it may be for other stuff
-	set_errno(ENOMEM);
-	return -1;
-}
-
-long WEAK __syscall_mremap(long old_addr, long old_len, long new_len, long flags, long new_addr)
-{
-	return do_mremap(old_addr, old_len, new_len);
-}
-
-[[cheerp::wasm]]
-long WEAK __syscall_madvise(void* a, long length, long advice)
-{
-	ASSERT_ALIGNED(a);
-	ASSERT_ALIGNED(length);
-	assert((void*)a >= mmapStart && "madvise address below mmapped range");
-	assert((void*)a < mmapEnd && "madvise address above mmapped range");
-	if (advice != MADV_DONTNEED)
-	{
-		set_errno(EINVAL);
-		return -1;
-	}
-	uint64_t* addr = reinterpret_cast<uint64_t*>(a);
-	uint64_t* end = reinterpret_cast<uint64_t*>((char*)a+length);
-	for(;addr < end; addr++)
-	{
-		*addr = 0;
-	}
-	return 0;
-}
-
+#define WASM_PAGE (64*1024)
+#define ALIGN(x) ((typeof (x))((((uintptr_t)x) + WASM_PAGE-1) & ~(WASM_PAGE-1)))
 [[cheerp::wasm]]
 long WEAK __syscall_brk(void* newaddr)
 {
 	static char* brkEnd = nullptr;
 	if (!brkEnd)
 	{
-		brkEnd = DO_ALIGN(_heapStart);
+		brkEnd = ALIGN(_heapStart);
 	}
 	char* a1 = reinterpret_cast<char*>(newaddr);
-	if (a1 < _heapStart)
+	if (a1 < brkEnd)
 	{
-		return reinterpret_cast<long>(_heapStart);
+		return reinterpret_cast<long>(brkEnd);
 	}
-	if (a1 >= brkEnd)
-		return -1;
-	return reinterpret_cast<long>(newaddr);
+	int length = (char*)newaddr - brkEnd;
+	if (length <= 0)
+	{
+		return reinterpret_cast<long>(brkEnd);
+	}
+	length = ALIGN(length);
+	if (brkEnd < _heapEnd)
+	{
+		int avail = _heapEnd - brkEnd;
+		if (avail >= length)
+		{
+			brkEnd += length;
+			return reinterpret_cast<long>(brkEnd);
+		}
+		length -= avail;
+		brkEnd += avail;
+	}
+	int res = __builtin_cheerp_grow_memory(length);
+	if (res == -1)
+	{
+		return reinterpret_cast<long>(brkEnd);
+	}
+	brkEnd += res;
+	return reinterpret_cast<long>(brkEnd);
 }
 
 namespace {
