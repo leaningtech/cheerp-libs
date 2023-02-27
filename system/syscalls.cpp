@@ -560,5 +560,22 @@ int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 	return 0;
 }
 
+long __syscall_rt_sigprocmask(long a1, ...)
+{
+	return 0;
+}
+
+[[cheerp::genericjs]] [[noreturn]] void raiseSignal()
+{
+	__asm__("throw new Error('Cheerp: Signal raised')");
+	__builtin_unreachable();
+}
+
+long __syscall_tkill(long a1, ...)
+{
+	raiseSignal();
+	return 0;
+}
+
 }
 
