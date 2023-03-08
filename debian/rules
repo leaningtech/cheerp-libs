@@ -22,3 +22,8 @@ override_dh_auto_install:
 	make -C stdlibs install_asmjs INSTALL_PREFIX=$(CURDIR)/debian/cheerp-libs/opt/cheerp CHEERP_PREFIX=/opt/cheerp
 	make -C system/build_genericjs install
 	make -C system/build_asmjs install
+
+override_dh_installdocs:
+	install -d debian/cheerp-libs/usr/share/doc/cheerp-libs/
+	cp --reflink=auto -a LICENSE.TXT debian/cheerp-libs/usr/share/doc/cheerp-libs/LICENSE.TXT.cheerp-libs.gz
+	dh_installdocs
