@@ -384,5 +384,10 @@ long WEAK __syscall_rt_sigaction(long a1,...)
 	return -ENOSYS;
 }
 
+int WEAK __syscall_rename(const char *oldpath, const char *newpath)
+{
+	return -ENOSYS;
+}
+
 }
 
