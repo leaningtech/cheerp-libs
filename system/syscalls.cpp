@@ -236,6 +236,11 @@ long WEAK __syscall_writev(long fd, const iovec* ios, long len)
 	return do_syscall_writev(ios, len);
 }
 
+long WEAK __syscall_readv(long fd, const iovec* ios, long len)
+{
+	return -ENOSYS;
+}
+
 [[cheerp::genericjs]]
 double offsetInMilliseconds()
 {
@@ -301,7 +306,7 @@ int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 	return 0;
 }
 
-long __syscall_rt_sigprocmask(long a1, ...)
+long WEAK __syscall_rt_sigprocmask(long a1, ...)
 {
 	return 0;
 }
@@ -312,10 +317,71 @@ long __syscall_rt_sigprocmask(long a1, ...)
 	__builtin_unreachable();
 }
 
-long __syscall_tkill(long a1, ...)
+long WEAK __syscall_tkill(long a1, ...)
 {
 	raiseSignal();
 	return 0;
+}
+
+size_t WEAK __syscall__llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low,
+	unsigned long long* result, unsigned int whence)
+{
+	return -ENOSYS;
+}
+
+int pthread_cancel(struct __pthread* t)
+{
+	abort();
+}
+
+long WEAK __syscall_futex_time64(long a1,...)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_clock_gettime32(long a1,...)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_gettimeofday_time32(long a1,...)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_set_robust_list(long a1, ...)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_fcntl64(long a1, ...)
+{
+	return -ENOSYS;
+}
+
+int WEAK __syscall_read(int fd, void* buf, int count)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_mmap2(long a1, long a2, long a3, long a4, long a5, long a6)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_munmap(long a1, long length)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_fstat64(long a1,...)
+{
+	return -ENOSYS;
+}
+
+long WEAK __syscall_rt_sigaction(long a1,...)
+{
+	return -ENOSYS;
 }
 
 }
