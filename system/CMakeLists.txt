@@ -1,13 +1,5 @@
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED (VERSION 3.0)
 PROJECT (system)
-
-FILE(GLOB SOURCES
-	*.cpp
-	*.c
-)
-
-ADD_LIBRARY(system STATIC ${SOURCES})
-
 
 if (CMAKE_CXX_COMPILER_TARGET STREQUAL "cheerp-wasm")
 set(LIB_TARGET "asmjs" CACHE STRING "Target used to build the library")
@@ -17,4 +9,27 @@ else ()
 message(FATAL_ERROR "Invalid target for system cheerp: ${CMAKE_CXX_COMPILER_TARGET}")
 endif ()
 
+SET(CMAKE_CXX_STANDARD 17)
+
+if (LIB_TARGET STREQUAL "asmjs")
+	ADD_LIBRARY(wasi STATIC
+		common.cpp
+		wasi.cpp
+		wasi_shim.cpp
+		divti3.c
+	)
+endif ()
+
+ADD_LIBRARY(system STATIC
+	common.cpp
+	browser.cpp
+	divti3.c
+)
+
+
+
 INSTALL(TARGETS system DESTINATION "lib/${LIB_TARGET}")
+
+if (LIB_TARGET STREQUAL "asmjs")
+	INSTALL(TARGETS wasi DESTINATION "lib/${LIB_TARGET}")
+endif()
