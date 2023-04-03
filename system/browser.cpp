@@ -233,10 +233,4 @@ int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 	return -ENOSYS;
 }
 
-void WEAK __syscall_main_args(int* argc, char*** argv)
-{
-	*argc = 0;
-	*argv = nullptr;
-}
-
 } // extern "C"
