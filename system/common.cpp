@@ -76,12 +76,12 @@ long WEAK __syscall_brk(void* newaddr)
 		length -= avail;
 		brkEnd += avail;
 	}
-	int res = __builtin_cheerp_grow_memory(length);
+	int res = __builtin_cheerp_grow_memory(length>>16);
 	if (res == -1)
 	{
 		return reinterpret_cast<long>(brkEnd);
 	}
-	brkEnd += res;
+	brkEnd += length;
 	return reinterpret_cast<long>(brkEnd);
 }
 
