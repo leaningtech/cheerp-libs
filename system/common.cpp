@@ -150,12 +150,12 @@ int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 	return 0;
 }
 
-long __syscall_rt_sigprocmask(long a1, ...)
+long WEAK __syscall_rt_sigprocmask(long a1, ...)
 {
 	return 0;
 }
 
-int __syscall_access(const char *pathname, int mode)
+int WEAK __syscall_access(const char *pathname, int mode)
 {
 	return -1;
 }
@@ -205,7 +205,7 @@ long WEAK __syscall_munmap(long a1, long length)
 	return -ENOSYS;
 }
 
-int pthread_cancel(struct __pthread* t)
+int WEAK pthread_cancel(struct __pthread* t)
 {
 	return __syscall_exit(EX_SOFTWARE);
 }
