@@ -123,7 +123,7 @@ struct statx
 	uint32_t stx_dev_minor;
 	uint64_t spare[14];
 };
-int __syscall_statx(int dirfd, const char* pathname, int flags, int mask, statx* st)
+int WEAK __syscall_statx(int dirfd, const char* pathname, int flags, int mask, statx* st)
 {
 	__wasi_lookupflags_t wflags = 0;
 	__wasi_filestat_t wst;
@@ -172,7 +172,7 @@ int __syscall_statx(int dirfd, const char* pathname, int flags, int mask, statx*
 	return err? -1 : 0;
 }
 
-int __syscall_link(const char *oldpath, const char *newpath)
+int WEAK __syscall_link(const char *oldpath, const char *newpath)
 {
 	assert(oldpath[0] == '/');
 	oldpath++;
@@ -183,7 +183,7 @@ int __syscall_link(const char *oldpath, const char *newpath)
 	return err? -1 : 0;
 }
 
-int __syscall_rename(const char *oldpath, const char *newpath)
+int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 {
 	assert(oldpath[0] == '/');
 	oldpath++;
@@ -194,7 +194,7 @@ int __syscall_rename(const char *oldpath, const char *newpath)
 	return err? -1 : 0;
 }
 
-int __syscall_unlink(const char *pathname)
+int WEAK __syscall_unlink(const char *pathname)
 {
 	assert(pathname[0] == '/');
 	pathname++;
@@ -210,7 +210,7 @@ struct linux_dirent64 {
 	unsigned char  d_type;   /* File type */
 	char           d_name[]; /* Filename (null-terminated) */
 };
-int __syscall_getdents64(int fd, void* dir, int count)
+int WEAK __syscall_getdents64(int fd, void* dir, int count)
 {
 	static_assert(sizeof(__wasi_dirent_t) >= sizeof(linux_dirent64), "wrong assumption");
 	size_t used = 0;
@@ -237,7 +237,7 @@ int __syscall_getdents64(int fd, void* dir, int count)
 	return err? -1 : read;
 }
 
-int __syscall_mkdir(const char *pathname, int mode)
+int WEAK __syscall_mkdir(const char *pathname, int mode)
 {
 	assert(pathname[0] == '/');
 	pathname++;
@@ -246,7 +246,7 @@ int __syscall_mkdir(const char *pathname, int mode)
 	return err? -1 : 0;
 }
 
-size_t __syscall__llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low,
+size_t WEAK __syscall__llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low,
 	unsigned long long* result, unsigned int whence)
 {
     __wasi_filedelta_t offset = uint64_t(offset_high) << 32 | offset_low;
@@ -256,7 +256,7 @@ size_t __syscall__llseek(unsigned int fd, unsigned long offset_high, unsigned lo
 	return err? -1 : ret;
 }
 
-int __syscall_read(int fd, void* buf, int count)
+int WEAK __syscall_read(int fd, void* buf, int count)
 {
 	__wasi_iovec_t ios { reinterpret_cast<uint8_t*>(buf), __wasi_size_t(count) };
 	__wasi_size_t ret;
@@ -264,7 +264,7 @@ int __syscall_read(int fd, void* buf, int count)
 	errno = err;
 	return err? -1 : ret;
 }
-long __syscall_readv(long fd, const iovec* ios, long len)
+long WEAK __syscall_readv(long fd, const iovec* ios, long len)
 {
 	static_assert(sizeof(iovec) == sizeof(__wasi_iovec_t), "incompatible iovec size");
 	__wasi_size_t ret;
