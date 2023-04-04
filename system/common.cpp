@@ -38,10 +38,10 @@ long WEAK __syscall_ioctl(long fd, long req, void* arg)
 		}
 		default:
 		{
-			return -1;
+			return -EINVAL;
 		}
 	}
-	return -1;
+	return -EINVAL;
 }
 
 #define WASM_PAGE (64*1024)
@@ -118,7 +118,7 @@ long WEAK __syscall_clock_gettime64(int clock_id, struct timespec* tp)
 		}
 		default:
 		{
-			return -1;
+			return -EINVAL;
 		}
 	}
 	return 0;

@@ -213,8 +213,7 @@ int WEAK __syscall_read(int fd, void* buf, int count)
 
 long WEAK __syscall_open(const char* pathname, int flags, ...)
 {
-	errno = EACCES;
-	return -1;
+	return -ENOSYS;
 
 }
 long WEAK __syscall_close(int fd)
@@ -235,7 +234,7 @@ int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 
 int WEAK __syscall_access(const char *pathname, int mode)
 {
-	return -1;
+	return -ENOSYS;
 }
 
 
