@@ -155,11 +155,6 @@ long WEAK __syscall_rt_sigprocmask(long a1, ...)
 	return 0;
 }
 
-int WEAK __syscall_access(const char *pathname, int mode)
-{
-	return -1;
-}
-
 long WEAK __syscall_futex_time64(long a1,...)
 {
 	return -ENOSYS;
