@@ -78,15 +78,53 @@ long WEAK __syscall_open(const char* pathname, int flags, ...)
 	}
 	if (pathname[0] == '/')
 		pathname = pathname + 1;
-	int dirflags = __WASI_LOOKUPFLAGS_SYMLINK_FOLLOW;
-		__wasi_rights_t fs_rights_base = 0b11111111111111111111111111111;
-		__wasi_rights_t fs_rights_inheriting = fs_rights_base;
-		__wasi_fdflags_t fdflags = 0;
-		__wasi_fd_t ret;
-	errno = __wasi_path_open(rootFd, dirflags, pathname, flags, fs_rights_base, fs_rights_inheriting, fdflags, &ret);
-	return errno? -1 : 0;
 
+
+    __wasi_oflags_t oflags = 0;
+	if (flags & O_CREAT)
+		oflags |= __WASI_OFLAGS_CREAT;
+	if (flags & O_DIRECTORY)
+		oflags |= __WASI_OFLAGS_DIRECTORY;
+	if (flags & O_EXCL)
+		oflags |= __WASI_OFLAGS_EXCL;
+	if (flags & O_TRUNC)
+		oflags |= __WASI_OFLAGS_TRUNC;
+	__wasi_fdflags_t fdflags = 0;
+	if (flags & O_SYNC)
+		fdflags |= __WASI_FDFLAGS_SYNC;
+	if (flags & O_RSYNC)
+		fdflags |= __WASI_FDFLAGS_RSYNC;
+	if (flags & O_DSYNC)
+		fdflags |= __WASI_FDFLAGS_DSYNC;
+	if (flags & O_NONBLOCK)
+		fdflags |= __WASI_FDFLAGS_NONBLOCK;
+	if (flags & O_APPEND)
+		fdflags |= __WASI_FDFLAGS_APPEND;
+	int openmode = flags & O_ACCMODE;
+	__wasi_rights_t rights = 0b11111111111111111111111111111;
+	rights &= ~(__WASI_RIGHTS_FD_DATASYNC | __WASI_RIGHTS_FD_READ |
+		  __WASI_RIGHTS_FD_WRITE | __WASI_RIGHTS_FD_ALLOCATE |
+		  __WASI_RIGHTS_FD_READDIR | __WASI_RIGHTS_FD_FILESTAT_SET_SIZE);
+	if (openmode == O_RDONLY || openmode == O_RDWR)
+		rights |= __WASI_RIGHTS_FD_READ | __WASI_RIGHTS_FD_READDIR;
+	if (openmode == O_WRONLY || openmode == O_RDWR)
+	{
+		 rights |=
+			 __WASI_RIGHTS_FD_DATASYNC | __WASI_RIGHTS_FD_WRITE |
+			 __WASI_RIGHTS_FD_ALLOCATE |
+			 __WASI_RIGHTS_FD_FILESTAT_SET_SIZE;
+	}
+
+	__wasi_lookupflags_t lookup_flags = 0;
+	if ((flags & O_NOFOLLOW) == 0)
+		lookup_flags |= __WASI_LOOKUPFLAGS_SYMLINK_FOLLOW;
+	__wasi_rights_t fs_rights_base = rights;
+	__wasi_rights_t fs_rights_inheriting = fs_rights_base;
+	__wasi_fd_t ret;
+	__wasi_errno_t err = __wasi_path_open(rootFd, lookup_flags, pathname, oflags, fs_rights_base, fs_rights_inheriting, fdflags, &ret);
+	return err? -err : ret;
 }
+
 long WEAK __syscall_close(int fd)
 {
 	return __wasi_fd_close(fd);
