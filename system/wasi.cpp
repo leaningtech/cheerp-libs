@@ -3,11 +3,12 @@ extern "C" {
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <errno.h>
 #include <sysexits.h>
 #include <fcntl.h>
 }
 #include <limits.h>
-#include <errno.h>
+#include <limits>
 #include <ctime>
 #include <cstdint>
 #include <cstring>
@@ -28,20 +29,19 @@ double real_time_now()
 {
 	uint64_t time;
 	__wasi_errno_t err = __wasi_clock_time_get(__WASI_CLOCKID_REALTIME, 0, &time);
-	errno = err;
-	return time;
+	return err? std::numeric_limits<double>::quiet_NaN() : time;
 }
 double monotonic_time_now()
 {
 	uint64_t time;
-	errno = __wasi_clock_time_get(__WASI_CLOCKID_MONOTONIC, 0, &time);
-	return time;
+	__wasi_errno_t err = __wasi_clock_time_get(__WASI_CLOCKID_MONOTONIC, 0, &time);
+	return err? std::numeric_limits<double>::quiet_NaN() : time;
 }
 double cpu_time_now()
 {
 	uint64_t time;
-	errno = __wasi_clock_time_get(__WASI_CLOCKID_PROCESS_CPUTIME_ID, 0, &time);
-	return time;
+	__wasi_errno_t err = __wasi_clock_time_get(__WASI_CLOCKID_PROCESS_CPUTIME_ID, 0, &time);
+	return err? std::numeric_limits<double>::quiet_NaN() : time;
 }
 
 } //namespace sys_internal
@@ -59,8 +59,7 @@ long WEAK __syscall_writev(long fd, const iovec* ios, long len)
 	static_assert(sizeof(iovec) == sizeof(__wasi_iovec_t), "incompatible iovec size");
 	__wasi_size_t ret;
 	__wasi_errno_t err = __wasi_fd_write(fd, reinterpret_cast<const __wasi_ciovec_t*>(ios), len, &ret);
-	errno = err;
-	return err? -1 : ret;
+	return err? -err : ret;
 }
 
 long WEAK __syscall_write(int fd, void* buf, long count)
@@ -68,16 +67,14 @@ long WEAK __syscall_write(int fd, void* buf, long count)
 	__wasi_ciovec_t ios { reinterpret_cast<uint8_t*>(buf), __wasi_size_t(count) };
 	__wasi_size_t ret;
 	__wasi_errno_t err = __wasi_fd_write(fd, &ios, 1, &ret);
-	errno = err;
-	return err? -1 : ret;
+	return err? -err : ret;
 }
 
 long WEAK __syscall_open(const char* pathname, int flags, ...)
 {
 	if (rootFd < 0)
 	{
-		errno = EPERM;
-		return -1;
+		return -EPERM;
 	}
 	if (pathname[0] == '/')
 		pathname = pathname + 1;
@@ -92,8 +89,7 @@ long WEAK __syscall_open(const char* pathname, int flags, ...)
 }
 long WEAK __syscall_close(int fd)
 {
-	errno = __wasi_fd_close(fd);
-	return errno? -1 : 0;
+	return __wasi_fd_close(fd);
 }
 
 // NOTE: Internal musl definition
@@ -168,23 +164,20 @@ int WEAK __syscall_statx(int dirfd, const char* pathname, int flags, int mask, s
 	{
 		err = ENOENT;
 	}
-	errno = err;
-	return err? -1 : 0;
+	return err? -err : 0;
 }
 
 int WEAK __syscall_access(const char *pathname, int mode)
 {
+	if (pathname[0] == '/')
+		pathname = pathname + 1;
 	// Check for target file existence.
 	// TODO: when we support multiple preopened fds, also look at the permissions
 	// on the parent fd
 	__wasi_lookupflags_t lookup_flags = __WASI_LOOKUPFLAGS_SYMLINK_FOLLOW;
 	__wasi_filestat_t file;
 	__wasi_errno_t err = __wasi_path_filestat_get(rootFd, lookup_flags, pathname, &file);
-	if (err != 0) {
-		errno = err;
-		return -1;
-	}
-	return 0;
+	return err? -err : 0;
 }
 
 int WEAK __syscall_link(const char *oldpath, const char *newpath)
@@ -194,8 +187,7 @@ int WEAK __syscall_link(const char *oldpath, const char *newpath)
 	assert(newpath[0] == '/');
 	newpath++;
 	__wasi_errno_t err = __wasi_path_symlink(oldpath, rootFd, newpath);
-	errno = err;
-	return err? -1 : 0;
+	return err? -err : 0;
 }
 
 int WEAK __syscall_rename(const char *oldpath, const char *newpath)
@@ -205,8 +197,7 @@ int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 	assert(newpath[0] == '/');
 	newpath++;
 	__wasi_errno_t err = __wasi_path_rename(rootFd, oldpath, rootFd, newpath);
-	errno = err;
-	return err? -1 : 0;
+	return err? -err : 0;
 }
 
 int WEAK __syscall_unlink(const char *pathname)
@@ -214,8 +205,7 @@ int WEAK __syscall_unlink(const char *pathname)
 	assert(pathname[0] == '/');
 	pathname++;
 	__wasi_errno_t err = __wasi_path_unlink_file(rootFd, pathname);
-	errno = err;
-	return err? -1 : 0;
+	return err? -err : 0;
 }
 
 struct linux_dirent64 {
@@ -248,8 +238,7 @@ int WEAK __syscall_getdents64(int fd, void* dir, int count)
 		read += sizeof(tmp) + tmp.d_namlen;
 	}
 
-	errno = err;
-	return err? -1 : read;
+	return err? -err : read;
 }
 
 int WEAK __syscall_mkdir(const char *pathname, int mode)
@@ -257,8 +246,7 @@ int WEAK __syscall_mkdir(const char *pathname, int mode)
 	assert(pathname[0] == '/');
 	pathname++;
 	__wasi_errno_t err = __wasi_path_create_directory(rootFd, pathname);
-	errno = err;
-	return err? -1 : 0;
+	return err? -err : 0;
 }
 
 size_t WEAK __syscall__llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low,
@@ -267,8 +255,7 @@ size_t WEAK __syscall__llseek(unsigned int fd, unsigned long offset_high, unsign
     __wasi_filedelta_t offset = uint64_t(offset_high) << 32 | offset_low;
     __wasi_filesize_t ret;
 	__wasi_errno_t err = __wasi_fd_seek(fd, offset, whence, &ret);
-	errno = err;
-	return err? -1 : ret;
+	return err? -err : ret;
 }
 
 int WEAK __syscall_read(int fd, void* buf, int count)
@@ -276,16 +263,14 @@ int WEAK __syscall_read(int fd, void* buf, int count)
 	__wasi_iovec_t ios { reinterpret_cast<uint8_t*>(buf), __wasi_size_t(count) };
 	__wasi_size_t ret;
 	__wasi_errno_t err = __wasi_fd_read(fd, &ios, 1, &ret);
-	errno = err;
-	return err? -1 : ret;
+	return err? -err : ret;
 }
 long WEAK __syscall_readv(long fd, const iovec* ios, long len)
 {
 	static_assert(sizeof(iovec) == sizeof(__wasi_iovec_t), "incompatible iovec size");
 	__wasi_size_t ret;
 	__wasi_errno_t err = __wasi_fd_read(fd, reinterpret_cast<const __wasi_iovec_t*>(ios), len, &ret);
-	errno = err;
-	return err? -1 : ret;
+	return err? -err : ret;
 }
 
 // NOTE: numbers from 101 upwards are reserved for C++ constructors
