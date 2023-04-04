@@ -233,4 +233,10 @@ int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 	return -ENOSYS;
 }
 
+int WEAK __syscall_access(const char *pathname, int mode)
+{
+	return -1;
+}
+
+
 } // extern "C"

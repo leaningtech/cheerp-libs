@@ -172,6 +172,21 @@ int WEAK __syscall_statx(int dirfd, const char* pathname, int flags, int mask, s
 	return err? -1 : 0;
 }
 
+int WEAK __syscall_access(const char *pathname, int mode)
+{
+	// Check for target file existence.
+	// TODO: when we support multiple preopened fds, also look at the permissions
+	// on the parent fd
+	__wasi_lookupflags_t lookup_flags = __WASI_LOOKUPFLAGS_SYMLINK_FOLLOW;
+	__wasi_filestat_t file;
+	__wasi_errno_t err = __wasi_path_filestat_get(rootFd, lookup_flags, pathname, &file);
+	if (err != 0) {
+		errno = err;
+		return -1;
+	}
+	return 0;
+}
+
 int WEAK __syscall_link(const char *oldpath, const char *newpath)
 {
 	assert(oldpath[0] == '/');
