@@ -217,7 +217,7 @@ int WEAK __syscall_statx(int dirfd, const char* pathname, int flags, int mask, s
 	// TODO: Actually support dirfd, for now we assume it's just fstat
 	if(dirfd >= 0)
 	{
-		err = __wasi_path_filestat_get(dirfd, wflags, pathname, &wst);
+		err = __wasi_fd_filestat_get(dirfd, &wst);
 	}
 	else
 	{
