@@ -351,10 +351,11 @@ int WEAK __syscall_mkdir(const char *pathname, int mode)
 size_t WEAK __syscall__llseek(unsigned int fd, unsigned long offset_high, unsigned long offset_low,
 	unsigned long long* result, unsigned int whence)
 {
-    __wasi_filedelta_t offset = uint64_t(offset_high) << 32 | offset_low;
-    __wasi_filesize_t ret;
+	__wasi_filedelta_t offset = uint64_t(offset_high) << 32 | offset_low;
+	__wasi_filesize_t ret;
 	__wasi_errno_t err = __wasi_fd_seek(fd, offset, whence, &ret);
-	return err? -err : ret;
+	*result = ret;
+	return -err;
 }
 
 int WEAK __syscall_read(int fd, void* buf, int count)
