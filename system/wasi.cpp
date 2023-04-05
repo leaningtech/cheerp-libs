@@ -50,6 +50,50 @@ namespace {
 
 int rootFd = -1;
 
+struct DirData {
+	int fd;
+	__wasi_dircookie_t cookie;
+	DirData* next;
+
+	static DirData* opened;
+
+	static void add(int fd)
+	{
+		DirData* newD = static_cast<DirData*>(malloc(sizeof(DirData)));
+		newD->fd = fd;
+		newD->cookie = 0;
+		newD->next = opened;
+		opened = newD;
+	}
+	static void remove(int fd)
+	{
+		DirData* prev = nullptr;
+		for(DirData* d = opened; d != nullptr; d = d->next)
+		{
+			if (d->fd != fd)
+				continue;
+			if (prev)
+			{
+				prev->next = d->next;
+			}
+			else
+			{
+				opened = d->next;
+			}
+			free(d);
+		}
+	}
+	static DirData* get(int fd)
+	{
+		for(DirData* d = opened; d != nullptr; d = d->next)
+		{
+			if (d->fd == fd)
+				return d;
+		}
+		return nullptr;
+	}
+};
+
 }
 
 extern "C" {
@@ -122,11 +166,16 @@ long WEAK __syscall_open(const char* pathname, int flags, ...)
 	__wasi_rights_t fs_rights_inheriting = fs_rights_base;
 	__wasi_fd_t ret;
 	__wasi_errno_t err = __wasi_path_open(rootFd, lookup_flags, pathname, oflags, fs_rights_base, fs_rights_inheriting, fdflags, &ret);
+	if (err == 0 && (flags&O_DIRECTORY))
+	{
+		DirData::add(ret);
+	}
 	return err? -err : ret;
 }
 
 long WEAK __syscall_close(int fd)
 {
+	DirData::remove(fd);
 	return __wasi_fd_close(fd);
 }
 
@@ -253,30 +302,42 @@ struct linux_dirent64 {
 	unsigned char  d_type;   /* File type */
 	char           d_name[]; /* Filename (null-terminated) */
 };
+
+DirData* DirData::opened = nullptr;
+
 int WEAK __syscall_getdents64(int fd, void* dir, int count)
 {
 	static_assert(sizeof(__wasi_dirent_t) >= sizeof(linux_dirent64), "wrong assumption");
 	size_t used = 0;
 	__wasi_errno_t err = 0;
 	__wasi_size_t size = 0;
-	__wasi_dircookie_t cookie = 0;
+	DirData* data = DirData::get(fd);
+	if (dir == nullptr)
+		return -ENOENT;
+	__wasi_dircookie_t cookie = data->cookie;
 	uint8_t* buf = static_cast<uint8_t*>(dir);
-	err = __wasi_fd_readdir(fd, buf, count, 0, &size);
-	size_t read = 0;
+	err = __wasi_fd_readdir(fd, buf, count, cookie, &size);
+	if (err)
+		return -err;
+	size_t reado = 0;
+	size_t writeo = 0;
 	__wasi_dirent_t tmp;
-	while(read < size)
+	while(reado < size)
 	{
-		memcpy(&tmp, buf+read, sizeof(tmp));
-		linux_dirent64* tmpdst = reinterpret_cast<linux_dirent64*>(buf+read);
+		memcpy(&tmp, buf+reado, sizeof(tmp));
+		linux_dirent64* tmpdst = reinterpret_cast<linux_dirent64*>(buf+writeo);
 		tmpdst->d_ino = 0;
 		tmpdst->d_off = tmp.d_next;
+		data->cookie = tmp.d_next;
 		tmpdst->d_reclen = sizeof(linux_dirent64)+tmp.d_namlen;
 		tmpdst->d_type = tmp.d_type;
-		memmove(&tmpdst->d_name, buf + read + sizeof(tmp), tmp.d_namlen);
-		read += sizeof(tmp) + tmp.d_namlen;
+		memmove(&tmpdst->d_name, buf + reado + sizeof(__wasi_dirent_t), tmp.d_namlen);
+		tmpdst->d_name[tmp.d_namlen] = '\0';
+		reado += sizeof(__wasi_dirent_t) + tmp.d_namlen;
+		writeo += sizeof(linux_dirent64) + tmp.d_namlen;
 	}
 
-	return err? -err : read;
+	return err? -err : writeo;
 }
 
 int WEAK __syscall_mkdir(const char *pathname, int mode)
