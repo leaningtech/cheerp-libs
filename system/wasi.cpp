@@ -251,7 +251,7 @@ int WEAK __syscall_statx(int dirfd, const char* pathname, int flags, int mask, s
 	{
 		err = ENOENT;
 	}
-	return err? -err : 0;
+	return -err;
 }
 
 int WEAK __syscall_access(const char *pathname, int mode)
