@@ -121,7 +121,7 @@ long WEAK __syscall_open(const char* pathname, int flags, ...)
 		return -EPERM;
 	}
 	if (pathname[0] == '/')
-		pathname = pathname + 1;
+		pathname++;
 
 
     __wasi_oflags_t oflags = 0;
@@ -221,8 +221,8 @@ int WEAK __syscall_statx(int dirfd, const char* pathname, int flags, int mask, s
 	}
 	else
 	{
-		assert(pathname[0] == '/');
-		pathname++;
+		if(pathname[0] == '/')
+			pathname++;
 		err = __wasi_path_filestat_get(rootFd, wflags, pathname, &wst);
 	}
 	st->stx_size = wst.size;
@@ -289,8 +289,8 @@ int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 
 int WEAK __syscall_unlink(const char *pathname)
 {
-	assert(pathname[0] == '/');
-	pathname++;
+	if(pathname[0] == '/')
+		pathname++;
 	__wasi_errno_t err = __wasi_path_unlink_file(rootFd, pathname);
 	return err? -err : 0;
 }
@@ -342,8 +342,8 @@ int WEAK __syscall_getdents64(int fd, void* dir, int count)
 
 int WEAK __syscall_mkdir(const char *pathname, int mode)
 {
-	assert(pathname[0] == '/');
-	pathname++;
+	if(pathname[0] == '/')
+		pathname++;
 	__wasi_errno_t err = __wasi_path_create_directory(rootFd, pathname);
 	return err? -err : 0;
 }
