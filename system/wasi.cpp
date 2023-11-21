@@ -322,9 +322,14 @@ int WEAK __syscall_getdents64(int fd, void* dir, int count)
 	size_t reado = 0;
 	size_t writeo = 0;
 	__wasi_dirent_t tmp;
-	while(reado < size)
+	// Make sure a whole entry can still fit
+	while(reado + sizeof(__wasi_dirent_t) <= size)
 	{
 		memcpy(&tmp, buf+reado, sizeof(tmp));
+		// Make sure the whole name could fit in the buffer
+		size_t nextReadOffset = reado + sizeof(__wasi_dirent_t) + tmp.d_namlen;
+		if(nextReadOffset > size)
+			break;
 		linux_dirent64* tmpdst = reinterpret_cast<linux_dirent64*>(buf+writeo);
 		tmpdst->d_ino = 0;
 		tmpdst->d_off = tmp.d_next;
@@ -333,7 +338,7 @@ int WEAK __syscall_getdents64(int fd, void* dir, int count)
 		tmpdst->d_type = tmp.d_type;
 		memmove(&tmpdst->d_name, buf + reado + sizeof(__wasi_dirent_t), tmp.d_namlen);
 		tmpdst->d_name[tmp.d_namlen] = '\0';
-		reado += sizeof(__wasi_dirent_t) + tmp.d_namlen;
+		reado = nextReadOffset;
 		writeo += sizeof(linux_dirent64) + tmp.d_namlen;
 	}
 
