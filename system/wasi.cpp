@@ -457,7 +457,7 @@ long WEAK __syscall_exit(int code)
 	return 0;
 }
 
-void __cxa_throw_wasm(void *thrown_object, void *tinfo, void (*dest)(void *))
+void __cxa_throw_wasm_adapter(void *thrown_object, void *tinfo, void (*dest)(void *))
 {
 	const char msg[] = "Exception raised. Aborting...\n";
 	__syscall_write(1, (void*)(msg), sizeof(msg));
