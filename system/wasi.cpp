@@ -478,3 +478,12 @@ terminate() noexcept
 }
 
 }
+
+namespace __sanitizer {
+using uptr = unsigned int;
+bool IsWasi() { return true; }
+// Stub out genericjs functions
+void InitEnv() {}
+uptr GetCallstack(uptr *dest, uptr dest_len, uptr skip) {}
+uptr GetUtf16FunctionNameAtPc(uptr pc, char16_t *dest, uptr len) {}
+} // namespace __sanitizer
