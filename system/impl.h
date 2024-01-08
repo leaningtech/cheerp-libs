@@ -11,7 +11,7 @@ namespace sys_internal {
 }
 
 extern "C" {
-void WEAK __syscall_main_args(int* argc, char*** argv);
+void __syscall_main_args(int* argc, char*** argv);
 }
 
 #endif //_IMPL_H_

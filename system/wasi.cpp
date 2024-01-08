@@ -458,7 +458,7 @@ void __syscall_main_environ()
 {
 	__wasi_errno_t err;
 
-		// Get the sizes of the arrays we'll have to create to copy in the args.
+	// Get the sizes of the arrays we'll have to create to copy in the args.
 	size_t environ_buf_size;
 	size_t environ_size;
 	err = __wasi_environ_sizes_get(&environ_size, &environ_buf_size);
@@ -472,15 +472,14 @@ void __syscall_main_environ()
 		__wasi_proc_exit(EX_SOFTWARE);
 	}
 	if (num_ptrs > 32 || environ_buf_size > 32*1024) {
-                __wasi_proc_exit(EX__MAX);
-        }
+		__wasi_proc_exit(EX__MAX);
+	}
 
-	// Fill the argument chars, and the argv array with pointers into those chars.
 	err = __wasi_environ_get(reinterpret_cast<uint8_t **>(cheerp_environ), reinterpret_cast<uint8_t*>(environ_buf));
 	if (err != __WASI_ERRNO_SUCCESS) {
 		__wasi_proc_exit(EX_OSERR);
 	}
-        environ = cheerp_environ;
+	environ = cheerp_environ;
 }
 
 long WEAK __syscall_exit(int code)
