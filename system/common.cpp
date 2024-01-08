@@ -9,9 +9,16 @@ extern "C" {
 #include <ctime>
 #include <cstdint>
 #include <cassert>
+#include <cstdlib>
 #include <cheerpintrin.h>
 
+#  define LEAN_CXX_LIB
+#  include <client/cheerp/types.h>
+
 #include "impl.h"
+
+[[cheerp::genericjs]] const client::TArray<client::String>* __builtin_cheerp_environ();
+[[cheerp::genericjs]] const client::TArray<client::String>* __builtin_cheerp_argv();
 
 extern "C" {
 
@@ -205,5 +212,136 @@ int WEAK pthread_cancel(struct __pthread* t)
 	return __syscall_exit(EX_SOFTWARE);
 }
 
+[[cheerp::genericjs]] static size_t client_to_utf8(char *dest, size_t dlen, const client::String *str) {
+	constexpr uint32_t REPLACEMENT_CHARACTER = 0xFFFD;
+	constexpr uint32_t MAX_CODEPOINT = 0x10FFFF;
+	constexpr uint32_t INVALID_CODEPOINT = -1;
+
+	const size_t slen = str->get_length();
+	size_t j = 0;
+	for (size_t i = 0; i < slen; ++i) {
+		uint32_t cp = str->charCodeAt(i);
+
+		if (cp >= 0xD800 && cp <= 0xDFFF) {
+			if (i + 1 < slen) {
+				uint32_t trail = str->charCodeAt(++i);
+				cp = 0x10000 + ((cp & 0x3FF) | (trail & 0x3FF));
+			} else {
+				// Missing lower surrogate
+				cp = INVALID_CODEPOINT;
+			}
+		}
+
+		if (cp > MAX_CODEPOINT)
+			cp = INVALID_CODEPOINT;
+
+		if (cp <= 0x7F) {
+			if (j < dlen)
+				*dest++ = static_cast<char>(cp);
+
+			j += 1;
+		} else if (cp <= 0x7FF) {
+			if (j + 1 < dlen) {
+				*dest++ = 0xC0 | (cp >> 6);
+				*dest++ = 0x80 | (cp & 63);
+			}
+
+			j += 2;
+		} else if (cp <= 0xFFFF) {
+			if (j + 2 < dlen) {
+				*dest++ = 0xE0 | (cp >> 12);
+				*dest++ = 0x80 | ((cp >> 6) & 63);
+				*dest++ = 0x80 | (cp & 63);
+			}
+
+			j += 3;
+		} else {
+			if (j + 3 < dlen) {
+				*dest++ = 0xF0 | (cp >> 18);
+				*dest++ = 0x80 | ((cp >> 12) & 63);
+				*dest++ = 0x80 | ((cp >> 6) & 63);
+				*dest++ = 0x80 | (cp & 63);
+			}
+
+			j += 4;
+		}
+	}
+	return j;
 }
 
+#define MAX_ENTRIES 64
+static size_t buf_size = 0;
+static char argv_environ_buf[MAX_ENTRIES * 1024];
+
+[[cheerp::genericjs]] static size_t read_to_buf(char* dest, size_t n, const client::TArray<client::String> *arr, size_t idx)
+{
+	if (idx >= arr->get_length())
+		return 0;
+
+	size_t len = client_to_utf8(dest, n, (*arr)[idx]);
+	if (len < n)
+		dest[len] = '\0';
+	return len + 1;
+}
+
+[[cheerp::genericjs]] static size_t read_arg(char *dest, size_t n, size_t idx)
+{
+	return read_to_buf(dest, n, reinterpret_cast<const client::TArray<client::String>*>(__builtin_cheerp_argv()), idx);
+}
+
+void WEAK __syscall_main_args(int* argc_p, char*** argv_p)
+{
+	static char* argv[MAX_ENTRIES];
+
+	size_t i = 0;
+	while (true) {
+		if (i > sizeof(argv)/sizeof(argv[0]))
+			abort();
+
+		const size_t rem = sizeof argv_environ_buf - buf_size;
+		size_t len = read_arg(&argv_environ_buf[buf_size], rem, i);
+
+		if (!len)
+			break;
+		if (len > rem)
+			abort();
+
+		argv[i++] = &argv_environ_buf[buf_size];
+		buf_size += len;
+	}
+
+	*argc_p = i;
+	*argv_p = argv;
+}
+
+[[cheerp::genericjs]] static size_t read_env(char *dest, size_t n, size_t idx)
+{
+	return read_to_buf(dest, n, reinterpret_cast<const client::TArray<client::String>*>(__builtin_cheerp_environ()), idx);
+}
+
+
+extern "C" char **environ;
+void WEAK __syscall_main_environ() {
+	static char* cheerp_environ[MAX_ENTRIES];
+
+	size_t i = 0;
+	while (true) {
+		if (i >= sizeof(cheerp_environ)/sizeof(cheerp_environ[0]))
+			abort();
+
+		const size_t rem = sizeof argv_environ_buf - buf_size;
+		size_t len = read_env(&argv_environ_buf[buf_size], rem, i);
+
+		if (!len)
+			break;
+		if (len > rem)
+			abort();
+
+		cheerp_environ[i++] = &argv_environ_buf[buf_size];
+		buf_size += len;
+	}
+
+	cheerp_environ[i] = 0;
+	environ = cheerp_environ;
+}
+}
