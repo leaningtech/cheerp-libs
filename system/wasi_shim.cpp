@@ -35,7 +35,7 @@ int32_t __imported_wasi_snapshot_preview1_environ_get(int32_t arg0, int32_t arg1
     __import_name__("environ_get")
 ));
 
-__wasi_errno_t __wasi_environ_get(
+__attribute__((__weak__))  __wasi_errno_t __wasi_environ_get(
     uint8_t * * environ,
     uint8_t * environ_buf
 ){
@@ -48,7 +48,7 @@ int32_t __imported_wasi_snapshot_preview1_environ_sizes_get(int32_t arg0, int32_
     __import_name__("environ_sizes_get")
 ));
 
-__wasi_errno_t __wasi_environ_sizes_get(
+__attribute__((__weak__)) __wasi_errno_t __wasi_environ_sizes_get(
     __wasi_size_t *retptr0,
     __wasi_size_t *retptr1
 ){
