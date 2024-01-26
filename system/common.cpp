@@ -17,8 +17,8 @@ extern "C" {
 
 #include "impl.h"
 
-[[cheerp::genericjs]] const client::TArray<client::String>* __builtin_cheerp_environ();
-[[cheerp::genericjs]] const client::TArray<client::String>* __builtin_cheerp_argv();
+[[cheerp::genericjs]] client::TArray<client::String>* __builtin_cheerp_environ();
+[[cheerp::genericjs]] client::TArray<client::String>* __builtin_cheerp_argv();
 
 extern "C" {
 
@@ -284,9 +284,26 @@ static char argv_environ_buf[MAX_ENTRIES * 1024];
 	return len + 1;
 }
 
+[[cheerp::genericjs]] static client::TArray<client::String>* read_nodejs_args(const client::String *opt_name) {
+	client::TArray<client::String> *result = new client::TArray<client::String>();
+
+	const client::TArray<client::String> *argv = nullptr;
+	__asm__("process?.argv??[]" : "=r"(argv));
+
+	for (size_t i = 0; i < argv->get_length(); ++i) {
+		const client::String *arg = (*argv)[i];
+		if (arg->startsWith(opt_name))
+			result->push(arg->substr(opt_name->get_length()));
+	}
+	return result;
+}
+
 [[cheerp::genericjs]] static size_t read_arg(char *dest, size_t n, size_t idx)
 {
-	return read_to_buf(dest, n, reinterpret_cast<const client::TArray<client::String>*>(__builtin_cheerp_argv()), idx);
+	static client::TArray<client::String> *client_argv = __builtin_cheerp_argv()
+		? __builtin_cheerp_argv()
+		: read_nodejs_args(new client::String("--cheerp-arg="));
+	return read_to_buf(dest, n, client_argv, idx);
 }
 
 void WEAK __syscall_main_args(int* argc_p, char*** argv_p)
@@ -316,7 +333,10 @@ void WEAK __syscall_main_args(int* argc_p, char*** argv_p)
 
 [[cheerp::genericjs]] static size_t read_env(char *dest, size_t n, size_t idx)
 {
-	return read_to_buf(dest, n, reinterpret_cast<const client::TArray<client::String>*>(__builtin_cheerp_environ()), idx);
+	static client::TArray<client::String> *client_environ = __builtin_cheerp_environ()
+		? __builtin_cheerp_environ()
+		: read_nodejs_args(new client::String("--cheerp-env="));
+	return read_to_buf(dest, n, client_environ, idx);
 }
 
 
