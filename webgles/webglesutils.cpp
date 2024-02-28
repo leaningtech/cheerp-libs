@@ -45,14 +45,14 @@ void webGLESInit(client::HTMLCanvasElement* canvas, int options)
 		optObj->set_premultipliedAlpha(1);
 	else
 		optObj->set_premultipliedAlpha(0);
-	webGLES = static_cast<client::WebGLRenderingContext*>(canvas->getContext("experimental-webgl", optObj));
+	webGLES = canvas->getContext("experimental-webgl", optObj)->cast();
 	if (webGLES == NULL)
 		client::console.log("Sorry, we looked hard, but no sign of WebGL has been found :(");
 }
 
 bool webGLESInitExtVAO()
 {
-	webGLESExtVAO = static_cast<client::OESVertexArrayObject*>(webGLES->getExtension("OES_vertex_array_object"));
+	webGLESExtVAO = webGLES->getExtension("OES_vertex_array_object")->cast();
 	return webGLESExtVAO != nullptr;
 }
 
@@ -268,7 +268,7 @@ void glGetUniformiv(GLuint program, GLint location, GLint* data)
 void glGetVertexAttribfv(GLuint index, GLenum pname, GLfloat* data)
 {
 	// We only expect to be here for GL_CURRENT_VERTEX_ATTRIB
-	client::Float32Array* ret = (client::Float32Array*)webGLES->getVertexAttrib(index, pname);
+	client::Float32Array* ret = webGLES->getVertexAttrib(index, pname)->cast();
 	for(int i=0;i<4;i++)
 		data[i] = (*ret)[i];
 }

@@ -135,7 +135,7 @@ long do_syscall_writev(const iovec* ios, long len)
 		}
 	}
 
-	client::TArray<client::String>* arr = builder.getString()->split("\n");
+	client::TArray<client::String*>* arr = builder.getString()->split("\n");
 	const int L = arr->get_length();
 	for (int i=0; i+1<L; i++)
 	{

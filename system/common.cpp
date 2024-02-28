@@ -17,8 +17,8 @@ extern "C" {
 
 #include "impl.h"
 
-[[cheerp::genericjs]] client::TArray<client::String>* __builtin_cheerp_environ();
-[[cheerp::genericjs]] client::TArray<client::String>* __builtin_cheerp_argv();
+[[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_environ();
+[[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_argv();
 
 extern "C" {
 
@@ -273,7 +273,7 @@ int WEAK pthread_cancel(struct __pthread* t)
 static size_t buf_size = 0;
 static char argv_environ_buf[MAX_ENTRIES * 1024];
 
-[[cheerp::genericjs]] static size_t read_to_buf(char* dest, size_t n, const client::TArray<client::String> *arr, size_t idx)
+[[cheerp::genericjs]] static size_t read_to_buf(char* dest, size_t n, const client::TArray<client::String*> *arr, size_t idx)
 {
 	if (idx >= arr->get_length())
 		return 0;
@@ -284,10 +284,10 @@ static char argv_environ_buf[MAX_ENTRIES * 1024];
 	return len + 1;
 }
 
-[[cheerp::genericjs]] static client::TArray<client::String>* read_nodejs_args(const client::String *opt_name) {
-	client::TArray<client::String> *result = new client::TArray<client::String>();
+[[cheerp::genericjs]] static client::TArray<client::String*>* read_nodejs_args(const client::String *opt_name) {
+	client::TArray<client::String*> *result = new client::TArray<client::String*>();
 
-	const client::TArray<client::String> *argv = nullptr;
+	const client::TArray<client::String*> *argv = nullptr;
         __asm__("(typeof process == 'undefined' ? [] : process.argv) || []" : "=r"(argv));
 
 	for (size_t i = 0; i < argv->get_length(); ++i) {
@@ -300,7 +300,7 @@ static char argv_environ_buf[MAX_ENTRIES * 1024];
 
 [[cheerp::genericjs]] static size_t read_arg(char *dest, size_t n, size_t idx)
 {
-	static client::TArray<client::String> *client_argv = __builtin_cheerp_argv()
+	static client::TArray<client::String*> *client_argv = __builtin_cheerp_argv()
 		? __builtin_cheerp_argv()
 		: read_nodejs_args(new client::String("--cheerp-arg="));
 	return read_to_buf(dest, n, client_argv, idx);
@@ -333,7 +333,7 @@ void WEAK __syscall_main_args(int* argc_p, char*** argv_p)
 
 [[cheerp::genericjs]] static size_t read_env(char *dest, size_t n, size_t idx)
 {
-	static client::TArray<client::String> *client_environ = __builtin_cheerp_environ()
+	static client::TArray<client::String*> *client_environ = __builtin_cheerp_environ()
 		? __builtin_cheerp_environ()
 		: read_nodejs_args(new client::String("--cheerp-env="));
 	return read_to_buf(dest, n, client_environ, idx);
