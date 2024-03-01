@@ -43,7 +43,7 @@ class CheerpAllocationsTracker
 			}
 			return stackTrace;
 		}
-		client::TArray<client::String>* getPrettyStackTrace(bool isTopDown)
+		client::TArray<client::String*>* getPrettyStackTrace(bool isTopDown)
 		{
 			auto& curr = arrayStackTrace[isTopDown?1:0];
 			if (curr == NULL)
@@ -55,7 +55,7 @@ class CheerpAllocationsTracker
 				}
 				if (isTopDown)
 				{
-					arrayStackTrace[1] = new client::TArray<client::String>;
+					arrayStackTrace[1] = new client::TArray<client::String*>;
 					for (int i = 0; i<arrayStackTrace[0]->get_length(); i++)
 						arrayStackTrace[1]->push((*arrayStackTrace[0])[i]);
 					arrayStackTrace[1]->reverse();
@@ -71,7 +71,7 @@ class CheerpAllocationsTracker
 			error(error), stackTrace(stackTrace), arrayStackTrace{NULL,NULL} {}
 		client::Error* error;
 		client::String* stackTrace;
-		client::TArray<client::String>* arrayStackTrace[2];
+		client::TArray<client::String*>* arrayStackTrace[2];
 	};
 	class StatTreeNode
 	{
@@ -86,7 +86,7 @@ class CheerpAllocationsTracker
 			if (depth >= stack->get_length())
 				return;
 			if (childrenNodes == NULL)
-				childrenNodes = new client::TMap<client::String*, StatTreeNode*>;
+				childrenNodes = new client::Map<client::String*, StatTreeNode*>;
 
 			client::String* line = new client::String((*stack)[depth]);
 			if (childrenNodes->has(line) == false)
@@ -100,7 +100,7 @@ class CheerpAllocationsTracker
 			client::TArray<client::Object*>* children = new client::TArray<client::Object*>;
 			if (childrenNodes)
 			{
-				client::TArray<StatTreeNode>* sons= new client::TArray<StatTreeNode>;
+				client::TArray<StatTreeNode*>* sons= new client::TArray<StatTreeNode*>;
 
 				childrenNodes->forEach(cheerp::Callback([&sons](StatTreeNode* a, client::String* s)
 							{
@@ -128,12 +128,12 @@ class CheerpAllocationsTracker
 	private:
 		size_t liveMemory;
 		client::String* function;
-		client::TMap<client::String*,StatTreeNode*>* childrenNodes;
+		client::Map<client::String*,StatTreeNode*>* childrenNodes;
 	};
 	CheerpAllocationsTracker()
 	{
-		nameTags = new client::TMap<CHEERP_MEMPROF_TAG, client::String*>;
-		allocatedMemory = new client::TMap<uintptr_t, AllocationData*>;
+		nameTags = new client::Map<CHEERP_MEMPROF_TAG, client::String*>;
+		allocatedMemory = new client::Map<uintptr_t, AllocationData*>;
 		totalMemoryAllocated = 0;
 	}
 	static CheerpAllocationsTracker *instance()
@@ -232,15 +232,15 @@ class CheerpAllocationsTracker
 		return e;
 	}
 public:
-	static client::TArray<client::Object>* liveAllocations()
+	static client::TArray<client::Object*>* liveAllocations()
 	{
-		client::TArray<client::Object>* allocations= new client::TArray<client::Object>;
+		client::TArray<client::Object*>* allocations= new client::TArray<client::Object*>;
 
 		instance()->allocatedMemory->forEach(cheerp::Callback([&allocations](AllocationData *d, uintptr_t ptr)
 			{
 			size_t size = d->dim;
 			uintptr_t address = ptr;
-			client::TArray<client::String>* stackTrace = d->getPrettyStackTrace(true);
+			client::TArray<client::String*>* stackTrace = d->getPrettyStackTrace(true);
 			client::Object* composite = CHEERP_OBJECT(size, address, stackTrace);
 			allocations->push(composite);
 			}
@@ -345,21 +345,21 @@ private:
 		{
 			return representation;
 		}
-		client::TArray<client::String> *getStackTrace()
+		client::TArray<client::String*> *getStackTrace()
 		{
 			return stackTrace;
 		}
 	private:
 		client::String *parseLine(const client::String *str, const client::String *separator, const int blocks, const int index)
 		{
-			client::TArray<client::String> *B = str->split(separator);
+			client::TArray<client::String*> *B = str->split(separator);
 			if (B->get_length() != blocks || index >= blocks)
 				return new client::String("");
 			return (*B)[index];
 		}
 		void parseStackTrace(const client::String *separator, const int blocks, const int index)
 		{
-			client::TArray<client::String> *A = representation->split("\n");
+			client::TArray<client::String*> *A = representation->split("\n");
 			for (int i=0; i<A->get_length(); i++)
 			{
 				(*A)[i] = parseLine((*A)[i], separator, blocks, index);
@@ -416,7 +416,7 @@ private:
 		}
 	private:
 		client::String *representation;
-		client::TArray<client::String> *stackTrace;
+		client::TArray<client::String*> *stackTrace;
 		int linesParsed;
 		bool parsed;
 	};
@@ -436,8 +436,8 @@ private:
 		s = s->concat(prettyStack(d->getStackTrace()));
 		client::console.log(s);
 	}
-	client::TMap <CHEERP_MEMPROF_TAG, client::String*>* nameTags;
-	client::TMap <uintptr_t, AllocationData*>* allocatedMemory;
+	client::Map <CHEERP_MEMPROF_TAG, client::String*>* nameTags;
+	client::Map <uintptr_t, AllocationData*>* allocatedMemory;
 	size_t totalMemoryAllocated;
 	static TimestampManager timestampManager;
 };
@@ -449,7 +449,7 @@ public:
 	CheerpMemProf()
 	{
 	}
-	client::TArray<client::Object>* liveAllocations()
+	client::TArray<client::Object*>* liveAllocations()
 	{
 		return CheerpAllocationsTracker::liveAllocations();
 	}
