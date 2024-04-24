@@ -25,8 +25,8 @@ extern "C" {
 
 // HACK: The value of this variables will be rewritten to the correct heap start
 // and end by the compiler backend
-__attribute__((cheerp_asmjs)) char* volatile _heapStart = (char*)0xdeadbeef;
-__attribute__((cheerp_asmjs)) char* volatile _heapEnd = (char*)0xdeadbeef;
+__attribute__((cheerp_asmjs)) char* volatile _heapStart = (__wasm char*)0xdeadbeef;
+__attribute__((cheerp_asmjs)) char* volatile _heapEnd = (__wasm char*)0xdeadbeef;
 
 __attribute__((cheerp_asmjs)) char* _heapCur = 0;
 
