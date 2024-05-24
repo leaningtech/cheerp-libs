@@ -2,48 +2,11 @@
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 # Rename as appropiate
-PROJECT (CHEERP_LIBS_ADDONS)
+PROJECT (CHEERP_MEMPROF)
 
-SET(POSIXCOMPAT_SOURCES cheerpfs.cpp cheerpposix.cpp)
-
-ADD_LIBRARY(posixcompat STATIC ${POSIXCOMPAT_SOURCES})
-
-
-SET(EMSCOMPAT_SOURCES emscompat.cpp)
-
-ADD_LIBRARY(emscompat STATIC ${EMSCOMPAT_SOURCES})
-
-INSTALL(TARGETS posixcompat emscompat DESTINATION lib/${CHEERP_MODE}/)
-INSTALL(FILES cheerpfs.h emscripten.h DESTINATION include/)
-INSTALL(FILES emscripten/html5.h DESTINATION include/emscripten/)
-
-IF(NOT DEFINED CHEERP_MODE)
-MESSAGE(FATAL_ERROR "-DCHEERP_MODE is not specified")
-ELSEIF(${CHEERP_MODE} STREQUAL "asmjs")
-
-SET(MEMPROF_SOURCES memprof.cpp)
+SET(MEMPROF_SOURCES memprof.cpp memprofui.cpp)
 
 ADD_LIBRARY(memprof STATIC ${MEMPROF_SOURCES})
 
-TARGET_COMPILE_OPTIONS(memprof PUBLIC -target cheerp)
-
 INSTALL(TARGETS memprof DESTINATION lib/${CHEERP_MODE}/)
 INSTALL(FILES memprof.h DESTINATION include/client/cheerp/)
-
-SET(MEMPROFUI_SOURCES memprofui.cpp)
-
-ADD_EXECUTABLE(memprofui ${MEMPROFUI_SOURCES})
-
-TARGET_COMPILE_OPTIONS(memprofui PUBLIC -target cheerp)
-
-SET(CHEERP_TARGET cheerp-wasm)
-
-ELSE()
-
-SET(CHEERP_TARGET cheerp)
-
-ENDIF()
-
-TARGET_COMPILE_OPTIONS(posixcompat PUBLIC -target ${CHEERP_TARGET})
-TARGET_COMPILE_OPTIONS(emscompat PUBLIC -target ${CHEERP_TARGET})
-

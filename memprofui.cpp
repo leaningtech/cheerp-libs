@@ -1,22 +1,18 @@
 // Copyright 2018 Leaning Technologies Ltd. All Rights Reserved.
 
 #include <cheerp/client.h>
-#include <deque>
+#include "memprof_priv.h"
 
-namespace [[cheerp::genericjs]] client
+static int max(int a, int b)
 {
-	class CheerpMemProf: public Object
-	{
-	private:
-	public:
-		CheerpMemProf();
-		client::TArray<client::Object*>* liveAllocations();
-		client::Object* liveAllocationsTree(bool isTopDown);
-		size_t totalLiveMemory();
-	};
-};
+	return a<=b? b : a;
+}
+static int min(int a, int b)
+{
+	return a<=b? a : b;
+}
 
-class GraphAppearence
+class [[cheerp::genericjs]] GraphAppearence
 {
 public:
 	GraphAppearence()
@@ -91,22 +87,18 @@ public:
 	int howOftenDoLine;
 };
 
-class GraphData
+class [[cheerp::genericjs]] GraphData
 {
 public:
 	GraphData(int windowLenghtInSamples) : firstIndex(0), erasedSamples(0),
 		infiniteLength(windowLenghtInSamples <= 0 ? true : false),
-		minimumSamplesToRemember(infiniteLength ? -1 : windowLenghtInSamples), maxMemory(0)
+		minimumSamplesToRemember(infiniteLength ? -1 : windowLenghtInSamples), maxMemory(0),
+		samples(*new client::TArray<int>())
 	{
 	}
 	client::TArray<int>* lastSamples()
 	{
-		client::TArray<int>* res = new client::TArray<int>();
-		for (int i = 0; i<samples.size(); i++)
-		{
-			res->push(samples[i]);
-		}
-		return res;
+		return samples.slice();
 	}
 	void walkBack(int ammount)
 	{
@@ -123,7 +115,7 @@ public:
 			while (erasedSamples < firstIndex)
 			{
 				erasedSamples++;
-				samples.pop_front();
+				samples.shift();
 			}
 		}
 	}
@@ -145,19 +137,19 @@ public:
 	}
 	int size() const
 	{
-		return samples.size() + erasedSamples;
+		return samples.get_length() + erasedSamples;
 	}
 	void push_back(int x)
 	{
-		samples.push_back(x);
-		maxMemory = std::max(maxMemory, x);
+		samples.push(x);
+		maxMemory = max(maxMemory, x);
 	}
 	void backInTime()
 	{
 		firstIndex = erasedSamples;
 	}
 private:
-	std::deque<int> samples;
+	client::TArray<int>& samples;
 	int firstIndex;
 	int erasedSamples;
 public:
@@ -167,7 +159,7 @@ private:
 	int maxMemory;
 };
 
-class GraphDrawer
+class [[cheerp::genericjs]] GraphDrawer
 {
 public:
 	GraphDrawer() :
@@ -305,8 +297,8 @@ public:
 		for (int i=firstSample + 1; i < endSample; i++)
 		{
 			int curr = data.sample(i);
-			low = std::min(low, curr);
-			high = std::max(high, curr);
+			low = min(low, curr);
+			high = max(high, curr);
 		}
 		if (endSample - firstSample > 1)
 		{
@@ -318,11 +310,11 @@ public:
 	{
 		samplesPerPixel = 1;
 		while (data.shownSamples() / samplesPerPixel * appearence.barTotal() > appearence.widthGraph()) {
-			samplesPerPixel += std::max(1, (int)(samplesPerPixel * 0.3));
+			samplesPerPixel += max(1, (int)(samplesPerPixel * 0.3));
 		}
 		for (int i = data.skipped(); i < data.size(); i+= samplesPerPixel)
 		{
-			drawBar(data, i, std::min(i+samplesPerPixel, data.size()));
+			drawBar(data, i, min(i+samplesPerPixel, data.size()));
 		}
 	}
 	void drawTimelineLocations(int deltaOldSamples, double timeFromStart, double frequencyMilliseconds)
@@ -375,7 +367,7 @@ public:
 };
 
 
-class CheerpMemProfGraphInternals {
+class [[cheerp::genericjs]] CheerpMemProfGraphInternals {
 public:
 	CheerpMemProfGraphInternals(int intervalLengthMilliseconds, int samplingPeriodMilliseconds) :
 		frequencyMilliseconds(samplingPeriodToMilliseconds(samplingPeriodMilliseconds)),
@@ -389,7 +381,7 @@ public:
 	else
 		client::console.log("MemProfGraph invoked.\nInterval length: ", movingWindowSeconds, " seconds\nSampling period: ", frequencyMilliseconds, " milliseconds");
 	client::console.log("For additional data, call from the Console cheerpMemUI.liveAllocations() for the details with stack strace of the current allocations or cheerpMemUI.lastSamples() for the array with the memory consumption data");
-		JsMemProf = new client::CheerpMemProf;
+		JsMemProf = new CheerpMemProf();
 		memProfGraph = this;
 		redraw();
 		auto interval = client::setInterval(cheerp::Callback(mainLoop), frequencyMilliseconds);
@@ -452,7 +444,7 @@ private:
 	}
 	static CheerpMemProfGraphInternals* memProfGraph;
 	const int frequencyMilliseconds;
-	client::CheerpMemProf* JsMemProf;
+	CheerpMemProf* JsMemProf;
 	GraphData graphData;
 	GraphDrawer graphDrawer;
 };
@@ -462,7 +454,7 @@ class [[cheerp::jsexport]] [[cheerp::genericjs]] CheerpMemUI
 public:
 	CheerpMemUI(int windowLenghtSeconds, int samplingPeriodMilliseconds)
         {
-		cheerpMemProf = new client::CheerpMemProf();
+		cheerpMemProf = new CheerpMemProf();
 		memProfGraph = new CheerpMemProfGraphInternals(windowLenghtSeconds * 1000, samplingPeriodMilliseconds);
 	}
 	client::TArray<int>* lastSamples()
@@ -486,6 +478,6 @@ public:
                 return cheerpMemProf->totalLiveMemory();
         }
 private:
-	client::CheerpMemProf* cheerpMemProf;
+	CheerpMemProf* cheerpMemProf;
 	CheerpMemProfGraphInternals* memProfGraph;
 };

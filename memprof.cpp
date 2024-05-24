@@ -3,6 +3,7 @@
 #include <cheerp/client.h>
 #include <cheerp/types.h>
 #include "memprof.h"
+#include "memprof_priv.h"
 
 //Undefine the next row if you prefer to have the stacktrace built at the error generation
 #define STACKTRACE_BUILT_LAZILY
@@ -10,20 +11,7 @@
 //Change the number here to have a different depth, or comment it to have it unlimited
 //#define STACKTRACE_DEPTH 15
 
-extern "C"
-{
-	// We redefine internal symbols here
-	__attribute__((cheerp_wasm)) void* _malloc_r(void* reent, size_t size);
-	__attribute__((cheerp_wasm)) void* _realloc_r(void* reent, void* ptr, size_t size);
-	__attribute__((cheerp_wasm)) void* _calloc_r(void* reent, size_t nmemb, size_t size);
-	void __attribute__((cheerp_wasm)) _free_r(void* reent, void* ptr);
-	extern __attribute__((cheerp_wasm)) void* mALLOc(void* reent, size_t size);
-	extern __attribute__((cheerp_wasm)) void* rEALLOc(void* reent, void* ptr, size_t size);
-	extern __attribute__((cheerp_wasm)) void* cALLOc(void* reent, size_t nmemb, size_t size);
-	extern __attribute__((cheerp_wasm)) void fREe(void* reent, void* ptr);
-}
-
-class CheerpAllocationsTracker
+class [[cheerp::genericjs]] CheerpAllocationsTracker
 {
 	class AllocationData
 	{
@@ -442,26 +430,18 @@ private:
 	static TimestampManager timestampManager;
 };
 
-class [[cheerp::jsexport]] [[cheerp::genericjs]] CheerpMemProf
+[[cheerp::genericjs]] client::TArray<client::Object*>* CheerpMemProf::liveAllocations()
 {
-private:
-public:
-	CheerpMemProf()
-	{
-	}
-	client::TArray<client::Object*>* liveAllocations()
-	{
-		return CheerpAllocationsTracker::liveAllocations();
-	}
-	client::Object* liveAllocationsTree(bool isTopDown)
-	{
-		return CheerpAllocationsTracker::liveAllocationsTree(isTopDown);
-	}
-	int32_t totalLiveMemory()
-	{
-		return CheerpAllocationsTracker::totalLiveMemory();
-	}
-};
+	return CheerpAllocationsTracker::liveAllocations();
+}
+[[cheerp::genericjs]] client::Object* CheerpMemProf::liveAllocationsTree(bool isTopDown)
+{
+	return CheerpAllocationsTracker::liveAllocationsTree(isTopDown);
+}
+[[cheerp::genericjs]] int32_t CheerpMemProf::totalLiveMemory()
+{
+	return CheerpAllocationsTracker::totalLiveMemory();
+}
 
 [[cheerp::wasm]] CHEERP_MEMPROF_TAG cheerpMemProfAnnotate(const char *tag_name)
 {
@@ -489,30 +469,37 @@ public:
 	return CheerpAllocationsTracker::totalLiveMemory();
 }
 
-[[cheerp::wasm]] void* _malloc_r(void* reent, size_t size)
+extern "C" {
+
+[[cheerp::wasm]]  void *__cheerp_malloc(size_t n);
+[[cheerp::wasm]]  void *__cheerp_realloc(void* ptr, size_t n);
+[[cheerp::wasm]]  void *__cheerp_calloc(size_t nmemb, size_t size);
+[[cheerp::wasm]]  void __cheerp_free(void* ptr);
+
+[[cheerp::wasm]] void* malloc(size_t size)
 {
-	void* ret = mALLOc(reent, size);
+	void* ret = __cheerp_malloc(size);
 	CheerpAllocationsTracker::registerAlloc(reinterpret_cast<uintptr_t>(ret), size);
 	return ret;
 }
-
-[[cheerp::wasm]] void* _realloc_r(void* reent, void* ptr, size_t size)
+[[cheerp::wasm]] void* realloc(void* ptr, size_t size)
 {
 	CheerpAllocationsTracker::registerFree(reinterpret_cast<uintptr_t>(ptr));
-	void* ret = rEALLOc(reent, ptr, size);
+	void* ret = __cheerp_realloc(ptr, size);
 	CheerpAllocationsTracker::registerAlloc(reinterpret_cast<uintptr_t>(ret), size);
 	return ret;
 }
-
-[[cheerp::wasm]] void* _calloc_r(void* reent, size_t nmemb, size_t size)
+[[cheerp::wasm]] void* calloc(size_t nmemb, size_t size)
 {
-	void* ret = cALLOc(reent, nmemb, size);
+	void* ret = __cheerp_calloc(nmemb, size);
 	CheerpAllocationsTracker::registerAlloc(reinterpret_cast<uintptr_t>(ret), nmemb*size);
 	return ret;
 }
-
-[[cheerp::wasm]] void _free_r(void* reent, void* ptr)
+[[cheerp::wasm]] void free(void* ptr)
 {
-	fREe(reent, ptr);
+	__cheerp_free(ptr);
 	CheerpAllocationsTracker::registerFree(reinterpret_cast<uintptr_t>(ptr));
+}
+
+
 }
