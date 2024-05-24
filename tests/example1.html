@@ -5,7 +5,10 @@
     <title>Cheerp test1.js</title>
   </head>
   <body>
-    <script src="run_tests/test1.js"></script>
+    <script type="module">
+      import init from "/build/test1.js";
+      await init();
+    </script>
     <h1 id="pagetitle">Test1.js results</h1>
     <h2 id="pagetitle">(open the debug console)</h2>
   </body>

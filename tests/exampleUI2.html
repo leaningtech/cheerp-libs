@@ -19,17 +19,20 @@
     <h3>cheerpMemUI.liveAllocationsBottomUp()</h3>
     <h4>Bottom up tree of which function, and where on the call stack, generated an allocation</h4>
     <h3>Another test is resizing the window (back and forth)</h3>
-    <script src="run_tests/memoryHoarder.js"></script>
-    <script src="memprofui.js"></script>
-    <script>var cheerpMemUI = new CheerpMemUI(-1, 100)</script>
-    <script>
-    function fn(){
-	    console.log('totalLiveMemory()\n', cheerpMemUI.totalLiveMemory());
-	    console.log('lastSamples()\n', cheerpMemUI.lastSamples());
-	    console.log('liveAllocations()\n', cheerpMemUI.liveAllocations());
-	    console.log('liveAllocationsTopDown()\n', cheerpMemUI.liveAllocationsTopDown());
-	    console.log('liveAllocationsBottomUp()\n', cheerpMemUI.liveAllocationsBottomUp());
-    };
+    <script type="module">
+      import init from "/build/memoryHoarder.js";
+      let {CheerpMemUI} = await init();
+      let cheerpMemUI = new CheerpMemUI(-1, 100);
+      function fn(){
+        console.log('totalLiveMemory()\n', cheerpMemUI.totalLiveMemory());
+        console.log('lastSamples()\n', cheerpMemUI.lastSamples());
+        console.log('liveAllocations()\n', cheerpMemUI.liveAllocations());
+        console.log('liveAllocationsTopDown()\n', cheerpMemUI.liveAllocationsTopDown());
+        console.log('liveAllocationsBottomUp()\n', cheerpMemUI.liveAllocationsBottomUp());
+      };
+      window.cheerpMemUI = cheerpMemUI;
+      window.fn = fn;
+    </script>
 </script>
     <h3>text</h3>
   </body>

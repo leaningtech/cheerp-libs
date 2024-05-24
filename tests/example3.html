@@ -2,10 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Cheerp test1.js</title>
+    <title>Cheerp test3.js</title>
   </head>
   <body>
-    <script src="run_tests/test3.js"></script>
+    <script type="module">
+      import init from "/build/test3.js";
+      await init();
+    </script>
     <h1 id="pagetitle">Test3.js results</h1>
     <h2 id="pagetitle">(open the debug console)</h2>
   </body>

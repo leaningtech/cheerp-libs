@@ -2,7 +2,7 @@
 
 #include <cheerp/client.h>
 #include <cheerp/types.h>
-#include "memprof.h"
+#include <cheerp/memprof.h>
 #include "memprof_priv.h"
 
 //Undefine the next row if you prefer to have the stacktrace built at the error generation
@@ -90,7 +90,7 @@ class [[cheerp::genericjs]] CheerpAllocationsTracker
 			{
 				client::TArray<StatTreeNode*>* sons= new client::TArray<StatTreeNode*>;
 
-				childrenNodes->forEach(cheerp::Callback([&sons](StatTreeNode* a, client::String* s)
+				childrenNodes->forEach(cheerp::Callback([sons](StatTreeNode* a, client::String* s)
 							{
 							sons->push(a);
 							}
@@ -497,8 +497,8 @@ extern "C" {
 }
 [[cheerp::wasm]] void free(void* ptr)
 {
-	__cheerp_free(ptr);
 	CheerpAllocationsTracker::registerFree(reinterpret_cast<uintptr_t>(ptr));
+	__cheerp_free(ptr);
 }
 
 
