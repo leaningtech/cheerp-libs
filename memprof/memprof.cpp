@@ -91,25 +91,22 @@ class [[cheerp::genericjs]] CheerpAllocationsTracker
 				client::TArray<StatTreeNode*>* sons= new client::TArray<StatTreeNode*>;
 
 				childrenNodes->forEach(cheerp::Callback([sons](StatTreeNode* a, client::String* s)
-							{
-							sons->push(a);
-							}
-							));
+				{
+					sons->push(a);
+				}));
 
-				sons -> sort(cheerp::Callback([](StatTreeNode* a, StatTreeNode* b)
-							{
-							if (a->liveMemory < b->liveMemory)
-								return 1;
-							if (a->liveMemory > b->liveMemory)
-								return -1;
-							return 0;
-							}
-							));
-				sons -> forEach(cheerp::Callback([&children](StatTreeNode* a)
-							{
-							children->push(a->buildObject());
-							}
-							));
+				sons->sort(cheerp::Callback([](StatTreeNode* a, StatTreeNode* b)
+				{
+					if (a->liveMemory < b->liveMemory)
+						return 1;
+					if (a->liveMemory > b->liveMemory)
+						return -1;
+					return 0;
+				}));
+				sons->forEach(cheerp::Callback([children](StatTreeNode* a)
+				{
+					children->push(a->buildObject());
+				}));
 			}
 			return CHEERP_OBJECT(liveMemory, function, children);
 		}

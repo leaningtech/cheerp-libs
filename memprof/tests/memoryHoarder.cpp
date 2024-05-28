@@ -7,7 +7,7 @@
 
 int sort_of_random()
 {
-	return rand()%100000;
+	return rand()%100000 + 1;
 }
 
 void function()
@@ -22,7 +22,7 @@ void function()
 		M.clear();
 		times=sort_of_random()/20;
 	}
-	if (M.size() > sort_of_random()%(times++/100))
+	if (M.size() > sort_of_random()%(times++/100+1))
 	{
 		int index = sort_of_random()%M.size();
 		free(M[index]);
