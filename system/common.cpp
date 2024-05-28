@@ -23,12 +23,15 @@ extern "C" {
 extern "C" {
 
 
+#ifdef __ASMJS__
 // HACK: The value of this variables will be rewritten to the correct heap start
 // and end by the compiler backend
-__attribute__((cheerp_asmjs)) char* volatile _heapStart = (char*)0xdeadbeef;
-__attribute__((cheerp_asmjs)) char* volatile _heapEnd = (char*)0xdeadbeef;
+char* volatile _heapStart = (char*)0xdeadbeef;
+char* volatile _heapEnd = (char*)0xdeadbeef;
 
-__attribute__((cheerp_asmjs)) char* _heapCur = 0;
+char* _heapCur = 0;
+#endif
+
 
 long WEAK __syscall_ioctl(long fd, long req, void* arg)
 {
@@ -53,9 +56,11 @@ long WEAK __syscall_ioctl(long fd, long req, void* arg)
 
 #define WASM_PAGE (64*1024)
 #define ALIGN(x) ((decltype (x))((((uintptr_t)x) + WASM_PAGE-1) & ~(WASM_PAGE-1)))
-[[cheerp::wasm]]
 long WEAK __syscall_brk(void* newaddr)
 {
+#ifndef __ASMJS__
+	return 0;
+#else
 	static char* brkEnd = nullptr;
 	if (!brkEnd)
 	{
@@ -90,6 +95,7 @@ long WEAK __syscall_brk(void* newaddr)
 	}
 	brkEnd += length;
 	return reinterpret_cast<long>(brkEnd);
+#endif
 }
 
 long WEAK __syscall_clock_gettime64(int clock_id, struct timespec* tp)
@@ -151,7 +157,6 @@ long WEAK __syscall_futex(int* uaddr, int futex_op, ...)
 	return 0;
 }
 
-[[cheerp::wasm]]
 int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 {
 	return 0;
