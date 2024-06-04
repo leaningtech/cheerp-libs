@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <stddef.h>
+#include <stdint.h>
 
 extern "C"
 {
@@ -35,7 +36,7 @@ extern "C"
 		}
 		// Now the dest pointer is aligned
 		// Unroll for 64 bytes at a time
-		while(int(src8) <= int(srcEnd - 64))
+		while(uintptr_t(src8) <= uintptr_t(srcEnd - 64))
 		{
 			*((unsigned long long*)dst8) = *((unsigned long long*)src8);
 			*((unsigned long long*)(dst8+8)) = *((unsigned long long*)(src8+8));
@@ -49,7 +50,7 @@ extern "C"
 			src8+=64;
 		}
 		// Loop 8 bytes at a time
-		while(int(src8) <= int(srcEnd - 8))
+		while(uintptr_t(src8) <= uintptr_t(srcEnd - 8))
 		{
 			*((unsigned long long*)dst8) = *((unsigned long long*)src8);
 			dst8+=8;
@@ -72,7 +73,7 @@ extern "C"
 		unsigned long long c64 = ((unsigned long long)(c32)<<0) | ((unsigned long long)(c32)<<32);
 		unsigned char* dst8 = (unsigned char*)dst;
 		unsigned char* dstEnd = dst8 + len;
-		while(int(dst8) < int(dstEnd - 64))
+		while(uintptr_t(dst8) < uintptr_t(dstEnd - 64))
 		{
 			*((unsigned long long*)dst8) = c64;
 			*((unsigned long long*)(dst8+8)) = c64;
@@ -85,7 +86,7 @@ extern "C"
 			dst8+=64;
 		}
 		// Loop 8 bytes at a time
-		while(int(dst8) <= int(dstEnd - 8))
+		while(uintptr_t(dst8) <= uintptr_t(dstEnd - 8))
 		{
 			*((unsigned long long*)dst8) = c64;
 			dst8+=8;
