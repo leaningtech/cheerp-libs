@@ -370,4 +370,9 @@ long WEAK __syscall_membarrier(int cmd, unsigned int flags)
 	return 0;
 }
 
+long WEAK __syscall_sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)
+{
+	return 0;
+}
+
 }
