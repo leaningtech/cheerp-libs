@@ -554,4 +554,10 @@ long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *ar
 	return newThreadId;
 }
 
+long WEAK __syscall_set_tid_address(int *tidptr)
+{
+	clear_child_tid = tidptr;
+	return tid;
+}
+
 }
