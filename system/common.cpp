@@ -19,6 +19,7 @@ extern "C" {
 
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_environ();
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_argv();
+void __builtin_cheerp_set_thread_pointer(unsigned int);
 
 extern "C" {
 
@@ -373,6 +374,13 @@ long WEAK __syscall_membarrier(int cmd, unsigned int flags)
 
 long WEAK __syscall_sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)
 {
+	return 0;
+}
+
+[[cheerp::wasm]]
+long WEAK __syscall_set_thread_area(unsigned long tp)
+{
+	__builtin_cheerp_set_thread_pointer(tp);
 	return 0;
 }
 
