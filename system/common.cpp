@@ -6,12 +6,14 @@ extern "C" {
 }
 #include <limits.h>
 #include <errno.h>
+#include <sched.h>
 #include <stdarg.h>
 #include <ctime>
 #include <cstdint>
 #include <cassert>
 #include <cstdlib>
 #include <cheerpintrin.h>
+#include <cheerp/clientlib.h>
 
 #  define LEAN_CXX_LIB
 #  include <client/cheerp/types.h>
@@ -19,11 +21,29 @@ extern "C" {
 #include "impl.h"
 #include "futex.h"
 
+namespace [[cheerp::genericjs]] client {
+	class ThreadingObject : public Object{
+	public:
+		void set_func(int);
+		void set_args(int);
+		void set_tls(int);
+		void set_tid(int);
+		void set_stack(int);
+		void set_ctid(int);
+	};
+}
+
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_environ();
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_argv();
+[[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
+[[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 void __builtin_cheerp_set_thread_pointer(unsigned int);
 int __builtin_cheerp_atomic_wait(void *address, int expected, int timeout);
 int __builtin_cheerp_atomic_notify(void *address, int count);
+void __builtin_cheerp_stack_restore(void *stack);
+
+_Thread_local int tid = 1;
+_Thread_local int *clear_child_tid = nullptr;
 
 extern "C" {
 
@@ -450,6 +470,88 @@ long WEAK __syscall_set_thread_area(unsigned long tp)
 {
 	__builtin_cheerp_set_thread_pointer(tp);
 	return 0;
+}
+
+[[cheerp::genericjs]]
+void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, int newThreadId, unsigned int stack, unsigned int ctid)
+{
+	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
+	client::Blob* blob = __builtin_cheerp_get_threading_blob();
+	threadingObject->set_func(fp);
+	threadingObject->set_args(args);
+	threadingObject->set_tls(tls);
+	threadingObject->set_tid(newThreadId);
+	threadingObject->set_stack(stack);
+	threadingObject->set_ctid(ctid);
+	client::Worker* w = new client::Worker(client::URL.createObjectURL(blob));
+	w->postMessage(threadingObject);
+}
+
+[[cheerp::wasm]]
+[[cheerp::jsexport]]
+void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newThreadId, unsigned int stack, unsigned int ctid)
+{
+	// This is the setup for a worker thread.
+	// Set the thread pointer
+	if (tp != 0)
+		__syscall_set_thread_area(tp);
+	// Set the thread stack pointer
+	__builtin_cheerp_stack_restore(reinterpret_cast<void *>(stack));
+	// Assign tid
+	tid = newThreadId;
+	// Set the clear_child_tid if necessary
+	if (ctid != 0)
+		clear_child_tid = reinterpret_cast<int *>(ctid);
+	// Call the function passed to pthread_create with the arguments passed
+	void *(*entry)(void *) = reinterpret_cast<void*(*)(void*)>(func);
+	void *argument = reinterpret_cast<void *>(arg);
+	entry(argument);
+}
+
+[[cheerp::wasm]]
+long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *arg, void *ptid, void *tls, void *ctid)
+{
+	static int uniqueThreadId = 2;
+	int newThreadId = uniqueThreadId++;
+	int *set_tid = 0;
+	void *tlsPointer = 0;
+
+	// Assert that only the flags are set that we expect.
+	assert(flags & CLONE_VM);
+	flags &= ~CLONE_VM;
+	assert(flags & CLONE_FS);
+	flags &= ~CLONE_FS;
+	assert(flags & CLONE_FILES);
+	flags &= ~CLONE_FILES;
+	assert(flags & CLONE_SIGHAND);
+	flags &= ~CLONE_SIGHAND;
+	assert(flags & CLONE_THREAD);
+	flags &= ~CLONE_THREAD;
+	assert(flags & CLONE_SYSVSEM);
+	flags &= ~CLONE_SYSVSEM;
+	assert(flags & CLONE_DETACHED);
+	flags &= ~CLONE_DETACHED;
+
+	if (flags & CLONE_SETTLS)
+	{
+		flags &= ~CLONE_SETTLS;
+		tlsPointer = tls;
+	}
+	if (flags & CLONE_PARENT_SETTID)
+	{
+		flags &= ~CLONE_PARENT_SETTID;
+		*(int*)ptid = newThreadId;
+	}
+	if (flags & CLONE_CHILD_CLEARTID)
+	{
+		flags &= ~CLONE_CHILD_CLEARTID;
+		set_tid = (int*)ctid;
+	}
+
+	assert(flags == 0);
+
+	startWorkerFunction((unsigned int)func, (unsigned int)arg, (unsigned int)tlsPointer, newThreadId, (unsigned int)stack, (unsigned int)set_tid);
+	return newThreadId;
 }
 
 }
