@@ -11,6 +11,7 @@ extern "C" {
 #include <cheerp/client.h>
 
 #include "impl.h"
+#include "futex.h"
 
 namespace {
 
@@ -190,8 +191,20 @@ double cpu_time_now()
 
 extern "C" {
 
+long __syscall_futex(int* addr, int futex_op, ...);
+
 long WEAK __syscall_exit(long code)
 {
+	if (tid != 1 && clear_child_tid != nullptr)
+	{
+		// If clear_child_tid is set, write 0 to the address it points to,
+		// and do a FUTEX_WAKE on the address.
+		int *wake_address = clear_child_tid;
+		*clear_child_tid = 0;
+		__syscall_futex(wake_address, FUTEX_WAKE, 1, NULL, NULL, 0);
+		return 0;
+	}
+
 	raiseSignal();
 	return 0;
 }
