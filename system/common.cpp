@@ -6,6 +6,7 @@ extern "C" {
 }
 #include <limits.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <ctime>
 #include <cstdint>
 #include <cassert>
@@ -16,10 +17,13 @@ extern "C" {
 #  include <client/cheerp/types.h>
 
 #include "impl.h"
+#include "futex.h"
 
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_environ();
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_argv();
 void __builtin_cheerp_set_thread_pointer(unsigned int);
+int __builtin_cheerp_atomic_wait(void *address, int expected, int timeout);
+int __builtin_cheerp_atomic_notify(void *address, int count);
 
 extern "C" {
 
@@ -147,9 +151,74 @@ long WEAK __syscall_exit_group(long code,...)
 }
 
 
-long WEAK __syscall_futex(int* uaddr, int futex_op, ...)
+long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
-	return 0;
+	bool isPrivate = futex_op & FUTEX_PRIVATE;
+	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
+	futex_op &= ~FUTEX_PRIVATE;
+	futex_op &= ~FUTEX_CLOCK_REALTIME;
+	(void)isPrivate;
+	(void)isRealTime;
+
+	// These ops are currently not implemented, since musl doesn't use them.
+	assert(futex_op != FUTEX_FD);
+	assert(futex_op != FUTEX_CMP_REQUEUE);
+	assert(futex_op != FUTEX_WAKE_OP);
+	assert(futex_op != FUTEX_WAIT_BITSET);
+	assert(futex_op != FUTEX_WAKE_BITSET);
+	assert(futex_op != FUTEX_LOCK_PI2);
+	assert(futex_op != FUTEX_TRYLOCK_PI);
+	assert(futex_op != FUTEX_CMP_REQUEUE_PI);
+	assert(futex_op != FUTEX_WAIT_REQUEUE_PI);
+
+	switch (futex_op)
+	{
+		case FUTEX_WAKE:
+		{
+			va_list ap;
+			va_start(ap, futex_op);
+			uint32_t val = va_arg(ap, uint32_t);
+			va_end(ap);
+			return __builtin_cheerp_atomic_notify(uaddr, val);
+		}
+		case FUTEX_WAIT:
+		{
+			va_list ap;
+			va_start(ap, futex_op);
+			uint32_t val = va_arg(ap, uint32_t);
+			const struct timespec *ts = va_arg(ap, const struct timespec *);
+			va_end(ap);
+			uint64_t timeout = 0;
+			if (ts != 0)
+				timeout = ts->tv_sec * 1e9 + ts->tv_nsec;
+			uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
+			if (ret == 1)
+				return EAGAIN;
+			else if (ret == 2)
+				return ETIMEDOUT;
+			return 0;
+		}
+		case FUTEX_LOCK_PI:
+		{
+			// TODO
+			assert(false);
+		}
+		case FUTEX_UNLOCK_PI:
+		{
+			// TODO
+			assert(false);
+		}
+		case FUTEX_REQUEUE:
+		{
+			// TODO
+			assert(false);
+		}
+		default:
+		{
+			// This should be unreachable, all unhandled cases are asserted for at the top.
+			assert(false);
+		}
+	}
 }
 
 [[cheerp::wasm]]
