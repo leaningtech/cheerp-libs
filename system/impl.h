@@ -10,6 +10,9 @@ namespace sys_internal {
 	double cpu_time_now();
 }
 
+extern _Thread_local int tid;
+extern _Thread_local int *clear_child_tid;
+
 extern "C" {
 void __syscall_main_args(int* argc, char*** argv);
 }
