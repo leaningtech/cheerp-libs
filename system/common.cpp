@@ -365,4 +365,10 @@ void WEAK __syscall_main_environ() {
 	cheerp_environ[i] = 0;
 	environ = cheerp_environ;
 }
+
+long WEAK __syscall_membarrier(int cmd, unsigned int flags)
+{
+	return 0;
+}
+
 }
