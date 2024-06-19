@@ -67,19 +67,15 @@ long WEAK __syscall_brk(void* newaddr)
 		brkEnd = ALIGN(_heapStart);
 	}
 	char* a1 = reinterpret_cast<char*>(newaddr);
-	if (a1 < brkEnd)
+	if (a1 <= brkEnd)
 	{
 		return reinterpret_cast<long>(brkEnd);
 	}
-	int length = (char*)newaddr - brkEnd;
-	if (length <= 0)
-	{
-		return reinterpret_cast<long>(brkEnd);
-	}
+	unsigned int length = (char*)newaddr - brkEnd;
 	length = ALIGN(length);
 	if (brkEnd < _heapEnd)
 	{
-		int avail = _heapEnd - brkEnd;
+		unsigned int avail = _heapEnd - brkEnd;
 		if (avail >= length)
 		{
 			brkEnd += length;
