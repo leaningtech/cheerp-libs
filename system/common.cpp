@@ -42,8 +42,8 @@ int __builtin_cheerp_atomic_wait(void *address, int expected, int timeout);
 int __builtin_cheerp_atomic_notify(void *address, int count);
 void __builtin_cheerp_stack_restore(void *stack);
 
-_Thread_local int tid = 1;
-_Thread_local int *clear_child_tid = nullptr;
+THREAD_LOCAL int tid = 1;
+THREAD_LOCAL int *clear_child_tid = nullptr;
 
 extern "C" {
 
@@ -175,6 +175,7 @@ long WEAK __syscall_exit_group(long code,...)
 
 long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
+#ifdef __ASMJS__
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
 	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
 	futex_op &= ~FUTEX_PRIVATE;
@@ -241,6 +242,9 @@ long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 			assert(false);
 		}
 	}
+#else
+	return -1;
+#endif
 }
 
 int WEAK __syscall_mprotect(long addr, size_t len, int prot)
@@ -466,6 +470,7 @@ long WEAK __syscall_sched_setscheduler(pid_t pid, int policy, const struct sched
 	return 0;
 }
 
+#ifdef __ASMJS__
 [[cheerp::wasm]]
 long WEAK __syscall_set_thread_area(unsigned long tp)
 {
@@ -560,5 +565,6 @@ long WEAK __syscall_set_tid_address(int *tidptr)
 	clear_child_tid = tidptr;
 	return tid;
 }
+#endif
 
 }
