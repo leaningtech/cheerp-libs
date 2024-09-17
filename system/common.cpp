@@ -38,7 +38,7 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 void __builtin_cheerp_set_thread_pointer(unsigned int);
-int __builtin_cheerp_atomic_wait(void *address, int expected, int timeout);
+int __builtin_cheerp_atomic_wait(void *address, int expected, int64_t timeout);
 int __builtin_cheerp_atomic_notify(void *address, int count);
 void __builtin_cheerp_stack_restore(void *stack);
 
@@ -211,9 +211,9 @@ long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 			uint32_t val = va_arg(ap, uint32_t);
 			const struct timespec *ts = va_arg(ap, const struct timespec *);
 			va_end(ap);
-			uint64_t timeout = 0;
-			if (ts != 0)
-				timeout = ts->tv_sec * 1e9 + ts->tv_nsec;
+			int64_t timeout = -1;
+			if (ts != nullptr)
+				timeout = ts->tv_sec * 1000000000 + ts->tv_nsec;
 			uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
 			if (ret == 1)
 				return EAGAIN;
