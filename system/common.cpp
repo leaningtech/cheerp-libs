@@ -376,6 +376,11 @@ long WEAK __syscall_sched_setscheduler(pid_t pid, int policy, const struct sched
 	return 0;
 }
 
+long WEAK __syscall_sched_yield()
+{
+	return 0;
+}
+
 long WEAK __syscall_set_thread_area(unsigned long tp)
 {
 	return 0;
