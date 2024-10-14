@@ -32,12 +32,6 @@ _Thread_local int *clear_child_tid = nullptr;
 
 extern "C" {
 
-void __builtin_cheerp_set_thread_pointer(unsigned int);
-int __builtin_cheerp_atomic_wait(void *address, int expected, int64_t timeout);
-int __builtin_cheerp_atomic_notify(void *address, int count);
-void __builtin_cheerp_stack_restore(void *stack);
-
-
 long __syscall_futex(int32_t* uaddr, int futex_op, ...)
 {
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
