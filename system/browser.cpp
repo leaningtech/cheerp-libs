@@ -114,6 +114,7 @@ void CheerpStringBuilder::processChar(unsigned int& codepoint, unsigned int& rem
 [[cheerp::genericjs]]
 long do_syscall_writev(const iovec* ios, long len)
 {
+	// TODO: These should be thread local, but currently genericjs thread locals are not supported.
 	static client::String* curr = new client::String();
 	static unsigned int codepoint = 0;
 	static unsigned int remaining = 0;
