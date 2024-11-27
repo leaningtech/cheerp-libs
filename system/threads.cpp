@@ -197,6 +197,11 @@ long __syscall_set_tid_address(int *tidptr)
 	return tid;
 }
 
+long __syscall_membarrier(int cmd, unsigned int flags)
+{
+	return ENOSYS;
+}
+
 }
 
 namespace sys_internal {
