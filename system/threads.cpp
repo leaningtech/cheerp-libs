@@ -153,6 +153,10 @@ void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, i
 	threadingObject->set_ctid(ctid);
 	client::Worker* w = new client::Worker(client::URL.createObjectURL(blob));
 	w->postMessage(threadingObject);
+
+long __syscall_gettid(void)
+{
+	return tid;
 }
 
 [[cheerp::wasm]]
