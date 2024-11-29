@@ -8,6 +8,7 @@
 #include <cheerpintrin.h>
 #define LEAN_CXX_LIB
 #include <cheerp/clientlib.h>
+#include <cheerp/client.h>
 
 #include "impl.h"
 #include "futex.h"
@@ -28,7 +29,12 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 
+[[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
+MessageQueue<ThreadSpawnInfo> threadMessagingQueue;
+
 extern "C" {
+
+void _start();
 
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
 
@@ -143,16 +149,96 @@ long __syscall_set_thread_area(unsigned long tp);
 [[cheerp::genericjs]]
 void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, int newThreadId, unsigned int stack, unsigned int ctid)
 {
+	// If this is the main thread, only spawn utility thread.
+	// Else, use utility thread to spawn the new thread.
+	if (utilityWorker == nullptr)
+	{
+		client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
+		client::Blob* blob = __builtin_cheerp_get_threading_blob();
+		threadingObject->set_func(fp);
+		threadingObject->set_args(args);
+		threadingObject->set_tls(tls);
+		threadingObject->set_tid(newThreadId);
+		threadingObject->set_stack(stack);
+		threadingObject->set_ctid(ctid);
+		client::WorkerOptions* opts = new client::WorkerOptions();
+		opts->set_name("Utility");
+		utilityWorker = new client::Worker(client::URL.createObjectURL(blob), opts);
+		utilityWorker->postMessage(threadingObject);
+		return;
+	}
+	struct ThreadSpawnInfo spawnInfo;
+	spawnInfo.func = fp;
+	spawnInfo.args = args;
+	spawnInfo.tls = tls;
+	spawnInfo.tid = newThreadId;
+	spawnInfo.stack = stack;
+	spawnInfo.ctid = ctid;
+
+	threadMessagingQueue.send(spawnInfo);
+}
+
+[[cheerp::genericjs]]
+void spawnThreadFromUtility()
+{
+	ThreadSpawnInfo spawnInfo = threadMessagingQueue.receive();
 	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
 	client::Blob* blob = __builtin_cheerp_get_threading_blob();
-	threadingObject->set_func(fp);
-	threadingObject->set_args(args);
-	threadingObject->set_tls(tls);
-	threadingObject->set_tid(newThreadId);
-	threadingObject->set_stack(stack);
-	threadingObject->set_ctid(ctid);
-	client::Worker* w = new client::Worker(client::URL.createObjectURL(blob));
-	w->postMessage(threadingObject);
+	threadingObject->set_func(spawnInfo.func);
+	threadingObject->set_args(spawnInfo.args);
+	threadingObject->set_tls(spawnInfo.tls);
+	threadingObject->set_tid(spawnInfo.tid);
+	threadingObject->set_stack(spawnInfo.stack);
+	threadingObject->set_ctid(spawnInfo.ctid);
+	client::WorkerOptions* opts = new client::WorkerOptions();
+	opts->set_name((new client::String("Thread "))->concat(spawnInfo.tid));
+	client::Worker* worker = new client::Worker(client::URL.createObjectURL(blob), opts);
+	worker->set_onmessage(spawnThreadFromUtility);
+	worker->postMessage(threadingObject);
+}
+
+[[cheerp::genericjs]]
+void leak_thread()
+{
+	client::String* throwObj = new client::String("LeakUtilityThread");
+	__builtin_cheerp_throw(throwObj);
+}
+
+[[cheerp::genericjs]]
+void reschedule()
+{
+	client::setTimeout(spawnThreadFromUtility, 0);
+}
+
+[[cheerp::wasm]]
+void *utilityRoutine(void *arg)
+{
+	reschedule();
+	leak_thread();
+	return NULL;
+}
+
+[[cheerp::wasm]]
+void spawnUtilityThread()
+{
+	pthread_t utilityTid;
+
+	pthread_create(&utilityTid, NULL, &utilityRoutine, NULL);
+}
+
+[[cheerp::genericjs]]
+void callStart()
+{
+	_start();
+}
+
+[[cheerp::genericjs]]
+void spawnUtility()
+{
+	spawnUtilityThread();
+	// When the utility workers sends a message, continue execution in main thread with the _start function.
+	utilityWorker->addEventListener("message", callStart);
+}
 
 long __syscall_gettid(void)
 {
