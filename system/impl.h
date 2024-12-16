@@ -17,6 +17,30 @@ namespace sys_internal {
 extern _Thread_local int tid;
 extern _Thread_local int *clear_child_tid;
 
+class FutexSpinLock
+{
+private:
+	pthread_spinlock_t spinLock;
+
+public:
+	FutexSpinLock()
+	{
+		pthread_spin_init(&spinLock, PTHREAD_PROCESS_PRIVATE);
+	}
+	~FutexSpinLock()
+	{
+		pthread_spin_destroy(&spinLock);
+	}
+	void lock()
+	{
+		pthread_spin_lock(&spinLock);
+	}
+	void unlock()
+	{
+		pthread_spin_unlock(&spinLock);
+	}
+};
+
 struct ThreadSpawnInfo {
 	int func;
 	int args;
