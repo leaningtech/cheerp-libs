@@ -32,6 +32,7 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
 _Thread_local int tid = 1;
 _Thread_local int *clear_child_tid = nullptr;
+FutexSpinLock futexSpinLock;
 MessageQueue<ThreadSpawnInfo> threadMessagingQueue;
 
 extern "C" {
@@ -71,7 +72,8 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 
 			uint32_t threadsWokenUp = 0;
 			// If the main thread is waiting on this address, handle this case specially.
-			if (uaddr == mainThreadWaitAddress)
+			futexSpinLock.lock();
+			if (uaddr == mainThreadWaitAddress.load())
 			{
 				// Notify the main thread that it can wake up.
 				mainThreadWaitAddress.store(0);
@@ -79,8 +81,12 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 				threadsWokenUp = 1;
 				// If there are no other threads to wake up, return here.
 				if (val <= 0)
+				{
+					futexSpinLock.unlock();
 					return threadsWokenUp;
+				}
 			}
+			futexSpinLock.unlock();
 			return threadsWokenUp + __builtin_cheerp_atomic_notify(uaddr, val);
 		}
 		case FUTEX_WAIT:
@@ -99,14 +105,20 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 			if (tid == 1) // TODO: improve to use actual browser main thread here.
 			{
 				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
+				futexSpinLock.lock();
 				if (*uaddr != val)
+				{
+					futexSpinLock.unlock();
 					return EAGAIN;
+				}
 				mainThreadWaitAddress.store(uaddr);
 				if (*uaddr != val)
 				{
 					mainThreadWaitAddress.store(0);
+					futexSpinLock.unlock();
 					return EAGAIN;
 				}
+				futexSpinLock.unlock();
 				while (mainThreadWaitAddress.load() != 0)
 				{
 				}
