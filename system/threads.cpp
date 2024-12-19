@@ -30,6 +30,12 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 
 [[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
+enum atomicWaitStatus {
+	UNINITIALIZED = 0,
+	YES,
+	NO,
+};
+_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
 FutexSpinLock futexSpinLock;
 MessageQueue<ThreadSpawnInfo> threadMessagingQueue;
 
@@ -39,6 +45,14 @@ void _start();
 
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
 
+[[cheerp::genericjs]]
+bool testUseAtomicWait()
+{
+	bool canWait;
+	__asm__("(()=>{var ret;try{Atomics.wait(HEAP32,0,0,0);ret=true;}catch(e){ret=false;}return ret;})()" : "=r"(canWait));
+	return canWait;
+}
+
 long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
@@ -47,6 +61,14 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 	futex_op &= ~FUTEX_CLOCK_REALTIME;
 	(void)isPrivate;
 	(void)isRealTime;
+
+	if (canUseAtomicWait == UNINITIALIZED)
+	{
+		if (testUseAtomicWait())
+			canUseAtomicWait = YES;
+		else
+			canUseAtomicWait = NO;
+	}
 
 	// These ops are currently not implemented, since musl doesn't use them.
 	assert(futex_op != FUTEX_FD);
@@ -100,7 +122,7 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 
 			// If this is the main thread, it's illegal to do a futex wait operation.
 			// Instead, we busy wait while checking a special value.
-			if (tid == 1) // TODO: improve to use actual browser main thread here.
+			if (canUseAtomicWait == NO)
 			{
 				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
 				futexSpinLock.lock();
