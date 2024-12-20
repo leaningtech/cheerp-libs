@@ -139,10 +139,18 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 					return EAGAIN;
 				}
 				futexSpinLock.unlock();
+				double startSleepTime = 0;
+				if (timeout != -1)
+					startSleepTime = client::Date::now();
 				while (mainThreadWaitAddress.load() != 0)
 				{
+					if (timeout != -1)
+					{
+						double timeElapsedInMs = client::Date::now() - startSleepTime;
+						if (timeElapsedInMs >= timeout / 1000000)
+							return ETIMEDOUT;
+					}
 				}
-				// TODO : timeout calculation, if elapsed, ETIMEDOUT.
 			}
 			else
 			{
