@@ -559,7 +559,7 @@ _Noreturn void __imported_wasi_snapshot_preview1_proc_exit(int32_t arg0) __attri
     __import_name__("proc_exit")
 ));
 
-_Noreturn void __wasi_proc_exit(
+__attribute__((__weak__)) _Noreturn void __wasi_proc_exit(
     __wasi_exitcode_t rval
 ){
     __imported_wasi_snapshot_preview1_proc_exit((int32_t) rval);
