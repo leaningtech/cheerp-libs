@@ -103,11 +103,7 @@ long __syscall_futex(int32_t* uaddr, int futex_op, ...)
 }
 
 [[cheerp::wasm]]
-long __syscall_set_thread_area(unsigned long tp)
-{
-	__builtin_cheerp_set_thread_pointer(tp);
-	return 0;
-}
+long __syscall_set_thread_area(unsigned long tp);
 
 [[cheerp::genericjs]]
 void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, int newThreadId, unsigned int stack, unsigned int ctid)
