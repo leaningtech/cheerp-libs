@@ -9,7 +9,7 @@ int32_t __imported_wasi_snapshot_preview1_args_get(int32_t arg0, int32_t arg1) _
     __import_name__("args_get")
 ));
 
-__wasi_errno_t __wasi_args_get(
+__attribute__((__weak__)) __wasi_errno_t __wasi_args_get(
     uint8_t * * argv,
     uint8_t * argv_buf
 ){
@@ -22,7 +22,7 @@ int32_t __imported_wasi_snapshot_preview1_args_sizes_get(int32_t arg0, int32_t a
     __import_name__("args_sizes_get")
 ));
 
-__wasi_errno_t __wasi_args_sizes_get(
+__attribute__((__weak__)) __wasi_errno_t __wasi_args_sizes_get(
     __wasi_size_t *retptr0,
     __wasi_size_t *retptr1
 ){
