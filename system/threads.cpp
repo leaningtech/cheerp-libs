@@ -146,7 +146,7 @@ void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newT
 }
 
 [[cheerp::wasm]]
-long __syscall_clone4(int (*func)(void *), void *stack, int flags, void *arg, void *ptid, void *tls, void *ctid)
+long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *arg, void *ptid, void *tls, void *ctid)
 {
 	static int uniqueThreadId = 2;
 	int newThreadId = uniqueThreadId++;

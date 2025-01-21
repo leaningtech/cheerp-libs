@@ -386,11 +386,6 @@ long WEAK __syscall_set_thread_area(unsigned long tp)
 	return 0;
 }
 
-long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *arg, void *ptid, void *tls, void *ctid)
-{
-	return -ENOSYS;
-}
-
 long WEAK __syscall_set_tid_address(int *tidptr)
 {
 	return -ENOSYS;
