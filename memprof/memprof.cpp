@@ -1,5 +1,5 @@
 // Copyright 2018 Leaning Technologies Ltd. All Rights Reserved.
-
+#define INTERNAL_MUSL
 #include <cheerp/client.h>
 #include <cheerp/types.h>
 #include <cheerp/memprof.h>
