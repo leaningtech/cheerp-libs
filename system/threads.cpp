@@ -27,9 +27,6 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 
-_Thread_local int tid = 1;
-_Thread_local int *clear_child_tid = nullptr;
-
 extern "C" {
 
 long __syscall_futex(int32_t* uaddr, int futex_op, ...)
@@ -185,12 +182,6 @@ long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *ar
 
 	startWorkerFunction((unsigned int)func, (unsigned int)arg, (unsigned int)tlsPointer, newThreadId, (unsigned int)stack, (unsigned int)set_tid);
 	return newThreadId;
-}
-
-long __syscall_set_tid_address(int *tidptr)
-{
-	clear_child_tid = tidptr;
-	return tid;
 }
 
 }

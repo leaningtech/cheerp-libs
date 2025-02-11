@@ -20,6 +20,9 @@ extern "C" {
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_environ();
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_argv();
 
+_Thread_local int tid = 1;
+_Thread_local int *clear_child_tid = nullptr;
+
 extern "C" {
 
 
@@ -394,7 +397,8 @@ long __syscall_set_thread_area(unsigned long tp)
 
 long WEAK __syscall_set_tid_address(int *tidptr)
 {
-	return 1;
+	clear_child_tid = tidptr;
+	return tid;
 }
 
 }
