@@ -3,10 +3,12 @@
 #include <cstdarg>
 #include <cstdint>
 #include <sched.h>
+#include <atomic>
 
 #include <cheerpintrin.h>
 #define LEAN_CXX_LIB
 #include <cheerp/clientlib.h>
+#include <cheerp/client.h>
 
 #include "impl.h"
 #include "futex.h"
@@ -27,9 +29,31 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 
+[[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
+enum atomicWaitStatus {
+	UNINITIALIZED = 0,
+	YES,
+	NO,
+};
+_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
+FutexSpinLock futexSpinLock;
+MessageQueue<ThreadSpawnInfo> threadMessagingQueue;
+
 extern "C" {
 
-long __syscall_futex(int32_t* uaddr, int futex_op, ...)
+void _start();
+
+std::atomic<uint32_t*> mainThreadWaitAddress = 0;
+
+[[cheerp::genericjs]]
+bool testUseAtomicWait()
+{
+	bool canWait;
+	__asm__("(()=>{var ret;try{Atomics.wait(HEAP32,0,0,0);ret=true;}catch(e){ret=false;}return ret;})()" : "=r"(canWait));
+	return canWait;
+}
+
+long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
 	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
@@ -37,6 +61,14 @@ long __syscall_futex(int32_t* uaddr, int futex_op, ...)
 	futex_op &= ~FUTEX_CLOCK_REALTIME;
 	(void)isPrivate;
 	(void)isRealTime;
+
+	if (canUseAtomicWait == UNINITIALIZED)
+	{
+		if (testUseAtomicWait())
+			canUseAtomicWait = YES;
+		else
+			canUseAtomicWait = NO;
+	}
 
 	// These ops are currently not implemented, since musl doesn't use them.
 	assert(futex_op != FUTEX_FD);
@@ -57,7 +89,25 @@ long __syscall_futex(int32_t* uaddr, int futex_op, ...)
 			va_start(ap, futex_op);
 			uint32_t val = va_arg(ap, uint32_t);
 			va_end(ap);
-			return __builtin_cheerp_atomic_notify(uaddr, val);
+
+			uint32_t threadsWokenUp = 0;
+			// If the main thread is waiting on this address, handle this case specially.
+			futexSpinLock.lock();
+			if (uaddr == mainThreadWaitAddress.load())
+			{
+				// Notify the main thread that it can wake up.
+				mainThreadWaitAddress.store(0);
+				val -= 1;
+				threadsWokenUp = 1;
+				// If there are no other threads to wake up, return here.
+				if (val <= 0)
+				{
+					futexSpinLock.unlock();
+					return threadsWokenUp;
+				}
+			}
+			futexSpinLock.unlock();
+			return threadsWokenUp + __builtin_cheerp_atomic_notify(uaddr, val);
 		}
 		case FUTEX_WAIT:
 		{
@@ -69,11 +119,47 @@ long __syscall_futex(int32_t* uaddr, int futex_op, ...)
 			int64_t timeout = -1;
 			if (ts != nullptr)
 				timeout = ts->tv_sec * 1000000000 + ts->tv_nsec;
-			uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
-			if (ret == 1)
-				return EAGAIN;
-			else if (ret == 2)
-				return ETIMEDOUT;
+
+			// If this is the main thread, it's illegal to do a futex wait operation.
+			// Instead, we busy wait while checking a special value.
+			if (canUseAtomicWait == NO)
+			{
+				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
+				futexSpinLock.lock();
+				if (*uaddr != val)
+				{
+					futexSpinLock.unlock();
+					return EAGAIN;
+				}
+				mainThreadWaitAddress.store(uaddr);
+				if (*uaddr != val)
+				{
+					mainThreadWaitAddress.store(0);
+					futexSpinLock.unlock();
+					return EAGAIN;
+				}
+				futexSpinLock.unlock();
+				double startSleepTime = 0;
+				if (timeout != -1)
+					startSleepTime = client::Date::now();
+				while (mainThreadWaitAddress.load() != 0)
+				{
+					if (timeout != -1)
+					{
+						double timeElapsedInMs = client::Date::now() - startSleepTime;
+						if (timeElapsedInMs >= timeout / 1000000)
+							return ETIMEDOUT;
+					}
+				}
+			}
+			else
+			{
+				uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
+				if (ret == 1)
+					return EAGAIN; // Value at uaddr did not match val.
+				else if (ret == 2)
+					return ETIMEDOUT;
+			}
 			return 0;
 		}
 		case FUTEX_LOCK_PI:
@@ -105,16 +191,100 @@ long __syscall_set_thread_area(unsigned long tp);
 [[cheerp::genericjs]]
 void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, int newThreadId, unsigned int stack, unsigned int ctid)
 {
+	// If this is the main thread, only spawn utility thread.
+	// Else, use utility thread to spawn the new thread.
+	if (utilityWorker == nullptr)
+	{
+		client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
+		client::Blob* blob = __builtin_cheerp_get_threading_blob();
+		threadingObject->set_func(fp);
+		threadingObject->set_args(args);
+		threadingObject->set_tls(tls);
+		threadingObject->set_tid(newThreadId);
+		threadingObject->set_stack(stack);
+		threadingObject->set_ctid(ctid);
+		client::WorkerOptions* opts = new client::WorkerOptions();
+		opts->set_name("Utility");
+		utilityWorker = new client::Worker(client::URL.createObjectURL(blob), opts);
+		utilityWorker->postMessage(threadingObject);
+		return;
+	}
+	struct ThreadSpawnInfo spawnInfo;
+	spawnInfo.func = fp;
+	spawnInfo.args = args;
+	spawnInfo.tls = tls;
+	spawnInfo.tid = newThreadId;
+	spawnInfo.stack = stack;
+	spawnInfo.ctid = ctid;
+
+	threadMessagingQueue.send(spawnInfo);
+}
+
+[[cheerp::genericjs]]
+void spawnThreadFromUtility()
+{
+	ThreadSpawnInfo spawnInfo = threadMessagingQueue.receive();
 	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
 	client::Blob* blob = __builtin_cheerp_get_threading_blob();
-	threadingObject->set_func(fp);
-	threadingObject->set_args(args);
-	threadingObject->set_tls(tls);
-	threadingObject->set_tid(newThreadId);
-	threadingObject->set_stack(stack);
-	threadingObject->set_ctid(ctid);
-	client::Worker* w = new client::Worker(client::URL.createObjectURL(blob));
-	w->postMessage(threadingObject);
+	threadingObject->set_func(spawnInfo.func);
+	threadingObject->set_args(spawnInfo.args);
+	threadingObject->set_tls(spawnInfo.tls);
+	threadingObject->set_tid(spawnInfo.tid);
+	threadingObject->set_stack(spawnInfo.stack);
+	threadingObject->set_ctid(spawnInfo.ctid);
+	client::WorkerOptions* opts = new client::WorkerOptions();
+	opts->set_name((new client::String("Thread "))->concat(spawnInfo.tid));
+	client::Worker* worker = new client::Worker(client::URL.createObjectURL(blob), opts);
+	worker->set_onmessage(spawnThreadFromUtility);
+	worker->postMessage(threadingObject);
+}
+
+[[cheerp::genericjs]]
+void leak_thread()
+{
+	client::String* throwObj = new client::String("LeakUtilityThread");
+	__builtin_cheerp_throw(throwObj);
+}
+
+[[cheerp::genericjs]]
+void reschedule()
+{
+	client::setTimeout(spawnThreadFromUtility, 0);
+}
+
+[[cheerp::wasm]]
+void *utilityRoutine(void *arg)
+{
+	reschedule();
+	leak_thread();
+	return NULL;
+}
+
+[[cheerp::wasm]]
+void spawnUtilityThread()
+{
+	pthread_t utilityTid;
+
+	pthread_create(&utilityTid, NULL, &utilityRoutine, NULL);
+}
+
+[[cheerp::genericjs]]
+void callStart()
+{
+	_start();
+}
+
+[[cheerp::genericjs]]
+void spawnUtility()
+{
+	spawnUtilityThread();
+	// When the utility workers sends a message, continue execution in main thread with the _start function.
+	utilityWorker->addEventListener("message", callStart);
+}
+
+long __syscall_gettid(void)
+{
+	return tid;
 }
 
 [[cheerp::wasm]]
@@ -184,6 +354,11 @@ long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *ar
 	return newThreadId;
 }
 
+long __syscall_membarrier(int cmd, unsigned int flags)
+{
+	return 0;
+}
+
 }
 
 namespace sys_internal {
@@ -194,7 +369,7 @@ bool exit_thread()
 	{
 		// If clear_child_tid is set, write 0 to the address it points to,
 		// and do a FUTEX_WAKE on the address.
-		int *wake_address = clear_child_tid;
+		uint32_t *wake_address = reinterpret_cast<uint32_t*>(clear_child_tid);
 		*clear_child_tid = 0;
 		__syscall_futex(wake_address, FUTEX_WAKE, 1, nullptr, nullptr, 0);
 		return true;
