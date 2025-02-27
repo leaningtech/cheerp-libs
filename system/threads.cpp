@@ -28,6 +28,7 @@ namespace [[cheerp::genericjs]] client {
 
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
+[[cheerp::genericjs]] void __builtin_cheerp_thread_setup_resolve();
 
 [[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
 enum atomicWaitStatus {
@@ -272,6 +273,7 @@ void spawnUtilityThread()
 void callStart()
 {
 	_start();
+	__builtin_cheerp_thread_setup_resolve();
 }
 
 [[cheerp::genericjs]]
