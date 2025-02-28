@@ -19,6 +19,8 @@ extern "C" {
 
 #include "impl.h"
 
+_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
+
 namespace sys_internal {
 
 double timezone_offset()
@@ -494,6 +496,12 @@ void __cxa_throw_wasm_adapter(void *thrown_object, void *tinfo, void (*dest)(voi
 	__syscall_write(1, (void*)(msg), sizeof(msg));
 	__wasi_proc_exit(EX_OSERR);
 }
+
+bool testUseAtomicWait()
+{
+	return true;
+}
+
 } // extern "C"
 
 namespace std {
