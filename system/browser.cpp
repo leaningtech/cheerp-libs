@@ -13,6 +13,8 @@ extern "C" {
 #include "impl.h"
 #include "futex.h"
 
+_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
+
 namespace {
 
 class [[cheerp::genericjs]] CheerpStringBuilder
@@ -246,6 +248,19 @@ int WEAK __syscall_rename(const char *oldpath, const char *newpath)
 int WEAK __syscall_access(const char *pathname, int mode)
 {
 	return -ENOSYS;
+}
+
+[[cheerp::genericjs]]
+bool testUseAtomicWaitJS()
+{
+	bool canWait;
+	__asm__("(()=>{var ret;try{Atomics.wait(HEAP32,0,0,0);ret=true;}catch(e){ret=false;}return ret;})()" : "=r"(canWait));
+	return canWait;
+}
+
+bool testUseAtomicWait()
+{
+	return testUseAtomicWaitJS();
 }
 
 

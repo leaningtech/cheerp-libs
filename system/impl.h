@@ -14,8 +14,15 @@ namespace sys_internal {
 	bool exit_thread();
 }
 
+enum atomicWaitStatus {
+	UNINITIALIZED = 0,
+	YES,
+	NO,
+};
+
 extern _Thread_local int tid;
 extern _Thread_local int *clear_child_tid;
+extern _Thread_local atomicWaitStatus canUseAtomicWait;
 
 class FutexSpinLock
 {
@@ -102,6 +109,7 @@ public:
 
 extern "C" {
 void __syscall_main_args(int* argc, char*** argv);
+bool testUseAtomicWait();
 }
 
 #endif //_IMPL_H_

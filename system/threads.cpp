@@ -31,12 +31,6 @@ namespace [[cheerp::genericjs]] client {
 [[cheerp::genericjs]] void __builtin_cheerp_thread_setup_resolve();
 
 [[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
-enum atomicWaitStatus {
-	UNINITIALIZED = 0,
-	YES,
-	NO,
-};
-_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
 FutexSpinLock futexSpinLock;
 MessageQueue<ThreadSpawnInfo> threadMessagingQueue;
 
@@ -45,14 +39,6 @@ extern "C" {
 void _start();
 
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
-
-[[cheerp::genericjs]]
-bool testUseAtomicWait()
-{
-	bool canWait;
-	__asm__("(()=>{var ret;try{Atomics.wait(HEAP32,0,0,0);ret=true;}catch(e){ret=false;}return ret;})()" : "=r"(canWait));
-	return canWait;
-}
 
 long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
