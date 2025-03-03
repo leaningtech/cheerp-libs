@@ -126,15 +126,21 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 					return EAGAIN;
 				}
 				futexSpinLock.unlock();
-				double startSleepTime = 0;
+				int64_t startTime = 0;
 				if (timeout != -1)
-					startSleepTime = client::Date::now();
+				{
+					struct timespec startTimeStruct;
+					clock_gettime(CLOCK_MONOTONIC, &startTimeStruct);
+					startTime = startTimeStruct.tv_sec * 1000000000 + startTimeStruct.tv_nsec;
+				}
 				while (mainThreadWaitAddress.load() != 0)
 				{
 					if (timeout != -1)
 					{
-						double timeElapsedInMs = client::Date::now() - startSleepTime;
-						if (timeElapsedInMs >= timeout / 1000000)
+						struct timespec timeNowStruct;
+						clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
+						int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
+						if (timeNow - startTime >= timeout)
 							return ETIMEDOUT;
 					}
 				}
