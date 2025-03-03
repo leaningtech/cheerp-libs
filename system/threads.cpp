@@ -276,7 +276,7 @@ void spawnUtility()
 	utilityWorker->addEventListener("message", callStart);
 }
 
-long __syscall_gettid(void)
+long WEAK __syscall_gettid(void)
 {
 	return tid;
 }
