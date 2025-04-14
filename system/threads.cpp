@@ -115,14 +115,14 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 				if (*uaddr != val)
 				{
 					futexSpinLock.unlock();
-					return EAGAIN;
+					return -EAGAIN;
 				}
 				mainThreadWaitAddress.store(uaddr);
 				if (*uaddr != val)
 				{
 					mainThreadWaitAddress.store(0);
 					futexSpinLock.unlock();
-					return EAGAIN;
+					return -EAGAIN;
 				}
 				futexSpinLock.unlock();
 				int64_t startTime = 0;
@@ -140,7 +140,7 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 						clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
 						int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
 						if (timeNow - startTime >= timeout)
-							return ETIMEDOUT;
+							return -ETIMEDOUT;
 					}
 				}
 			}
@@ -148,9 +148,9 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 			{
 				uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
 				if (ret == 1)
-					return EAGAIN; // Value at uaddr did not match val.
+					return -EAGAIN; // Value at uaddr did not match val.
 				else if (ret == 2)
-					return ETIMEDOUT;
+					return -ETIMEDOUT;
 			}
 			return 0;
 		}
