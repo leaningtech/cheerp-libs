@@ -39,6 +39,25 @@ void _start();
 
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
 
+uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
+{
+	uint32_t threadsWokenUp = 0;
+	// If the main thread is waiting on this address, handle this case specially.
+	futexSpinLock.lock();
+	if (uaddr == mainThreadWaitAddress.load())
+	{
+		// Notify the main thread that it can wake up.
+		mainThreadWaitAddress.store(0);
+		amount -= 1;
+		threadsWokenUp = 1;
+	}
+	futexSpinLock.unlock();
+	if (amount == 0)
+		return threadsWokenUp;
+	return threadsWokenUp + __builtin_cheerp_atomic_notify(uaddr, amount);
+
+}
+
 long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
@@ -58,7 +77,6 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 
 	// These ops are currently not implemented, since musl doesn't use them.
 	assert(futex_op != FUTEX_FD);
-	assert(futex_op != FUTEX_CMP_REQUEUE);
 	assert(futex_op != FUTEX_WAKE_OP);
 	assert(futex_op != FUTEX_WAIT_BITSET);
 	assert(futex_op != FUTEX_WAKE_BITSET);
@@ -76,24 +94,7 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 			uint32_t val = va_arg(ap, uint32_t);
 			va_end(ap);
 
-			uint32_t threadsWokenUp = 0;
-			// If the main thread is waiting on this address, handle this case specially.
-			futexSpinLock.lock();
-			if (uaddr == mainThreadWaitAddress.load())
-			{
-				// Notify the main thread that it can wake up.
-				mainThreadWaitAddress.store(0);
-				val -= 1;
-				threadsWokenUp = 1;
-				// If there are no other threads to wake up, return here.
-				if (val <= 0)
-				{
-					futexSpinLock.unlock();
-					return threadsWokenUp;
-				}
-			}
-			futexSpinLock.unlock();
-			return threadsWokenUp + __builtin_cheerp_atomic_notify(uaddr, val);
+			return wakeThreadsFutex(uaddr, val);
 		}
 		case FUTEX_WAIT:
 		{
@@ -154,17 +155,39 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 			}
 			return 0;
 		}
+		case FUTEX_REQUEUE:
+		case FUTEX_CMP_REQUEUE:
+		{
+			va_list ap;
+			va_start(ap, futex_op);
+			uint32_t val = va_arg(ap, uint32_t);
+			uint32_t val2 = va_arg(ap, unsigned long);
+			uint32_t* uaddr2 = va_arg(ap, uint32_t*);
+
+			if (futex_op == FUTEX_CMP_REQUEUE)
+			{
+				uint32_t val3 = va_arg(ap, uint32_t);
+				if (*uaddr != val3)
+				{
+					va_end(ap);
+					return -EAGAIN;
+				}
+			}
+			va_end(ap);
+
+			// We wake up val + val2 threads. The requeued threads are spurious wake-ups.
+			uint32_t threadsWokenUp = wakeThreadsFutex(uaddr, val + val2);
+
+			if (futex_op == FUTEX_REQUEUE && threadsWokenUp >= val)
+				return val;
+			return threadsWokenUp;
+		}
 		case FUTEX_LOCK_PI:
 		{
 			// TODO
 			assert(false);
 		}
 		case FUTEX_UNLOCK_PI:
-		{
-			// TODO
-			assert(false);
-		}
-		case FUTEX_REQUEUE:
 		{
 			// TODO
 			assert(false);
