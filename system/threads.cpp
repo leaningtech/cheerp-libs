@@ -298,6 +298,12 @@ void spawnUtility()
 	utilityWorker->addEventListener("message", callStart);
 }
 
+[[cheerp::genericjs]]
+void worker_close()
+{
+	client::self.close();
+}
+
 long WEAK __syscall_gettid(void)
 {
 	return tid;
