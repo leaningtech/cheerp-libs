@@ -198,10 +198,17 @@ bool WEAK exit_thread()
 
 extern "C" {
 
+[[cheerp::genericjs]]
+void WEAK worker_close()
+{
+	return;
+}
+
 long WEAK __syscall_exit(long code)
 {
 	if (sys_internal::exit_thread())
 	{
+		worker_close();
 		return 0;
 	}
 
