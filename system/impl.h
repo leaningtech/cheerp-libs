@@ -50,6 +50,20 @@ struct ThreadSpawnInfo {
 	int ctid;
 };
 
+enum QueueMessageType {
+	SPAWN_THREAD = 0,
+	KILL_THREAD,
+	KILL_ALL_THREADS,
+};
+
+struct QueueMessage {
+	QueueMessageType type;
+	union {
+		ThreadSpawnInfo spawnInfo;
+		int tid;
+	};
+};
+
 template <typename T>
 class MessageQueue
 {
