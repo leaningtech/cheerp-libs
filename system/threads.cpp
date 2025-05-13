@@ -25,6 +25,11 @@ namespace [[cheerp::genericjs]] client {
 	};
 }
 
+enum atomicWaitStatus {
+	UNINITIALIZED = 0,
+	YES,
+	NO,
+};
 
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
@@ -38,6 +43,20 @@ extern "C" {
 void _start();
 
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
+
+bool isBrowserMainThread()
+{
+	static _Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
+	if (canUseAtomicWait == UNINITIALIZED)
+	{
+		if (testUseAtomicWait())
+			canUseAtomicWait = YES;
+		else
+			canUseAtomicWait = NO;
+	}
+
+	return (canUseAtomicWait == NO);
+}
 
 uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
 {
@@ -67,14 +86,6 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 	(void)isPrivate;
 	(void)isRealTime;
 
-	if (canUseAtomicWait == UNINITIALIZED)
-	{
-		if (testUseAtomicWait())
-			canUseAtomicWait = YES;
-		else
-			canUseAtomicWait = NO;
-	}
-
 	// These ops are currently not implemented, since musl doesn't use them.
 	assert(futex_op != FUTEX_FD);
 	assert(futex_op != FUTEX_WAKE_OP);
@@ -84,6 +95,8 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 	assert(futex_op != FUTEX_TRYLOCK_PI);
 	assert(futex_op != FUTEX_CMP_REQUEUE_PI);
 	assert(futex_op != FUTEX_WAIT_REQUEUE_PI);
+
+	bool isBrowserMain = isBrowserMainThread();
 
 	switch (futex_op)
 	{
@@ -109,7 +122,7 @@ long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 
 			// If this is the main thread, it's illegal to do a futex wait operation.
 			// Instead, we busy wait while checking a special value.
-			if (canUseAtomicWait == NO)
+			if (isBrowserMain)
 			{
 				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
 				futexSpinLock.lock();
@@ -418,7 +431,7 @@ namespace sys_internal {
 
 bool exit_thread()
 {
-	if (tid != 1 && clear_child_tid != nullptr)
+	if (!isBrowserMainThread() && clear_child_tid != nullptr)
 	{
 		// If clear_child_tid is set, write 0 to the address it points to,
 		// and do a FUTEX_WAKE on the address.
