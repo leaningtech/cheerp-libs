@@ -19,8 +19,6 @@ extern "C" {
 
 #include "impl.h"
 
-_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
-
 namespace sys_internal {
 
 double timezone_offset()

@@ -13,8 +13,6 @@ extern "C" {
 #include "impl.h"
 #include "futex.h"
 
-_Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
-
 namespace {
 
 class [[cheerp::genericjs]] CheerpStringBuilder
