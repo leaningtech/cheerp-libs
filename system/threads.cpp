@@ -20,6 +20,7 @@ namespace [[cheerp::genericjs]] client {
 		void set_args(int);
 		void set_tls(int);
 		void set_tid(int);
+		int get_tid();
 		void set_stack(int);
 		void set_ctid(int);
 	};
@@ -35,8 +36,9 @@ enum atomicWaitStatus {
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 
 [[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
+[[cheerp::genericjs]] client::Map<int, client::Worker*>* workerList = nullptr;
 FutexSpinLock futexSpinLock;
-MessageQueue<ThreadSpawnInfo> threadMessagingQueue;
+MessageQueue<QueueMessage> threadMessagingQueue;
 
 extern "C" {
 
@@ -237,21 +239,24 @@ void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, i
 		utilityWorker->postMessage(threadingObject);
 		return;
 	}
-	struct ThreadSpawnInfo spawnInfo;
-	spawnInfo.func = fp;
-	spawnInfo.args = args;
-	spawnInfo.tls = tls;
-	spawnInfo.tid = newThreadId;
-	spawnInfo.stack = stack;
-	spawnInfo.ctid = ctid;
+	QueueMessage message;
+	message.type = QueueMessageType::SPAWN_THREAD;
+	message.spawnInfo.func = fp;
+	message.spawnInfo.args = args;
+	message.spawnInfo.tls = tls;
+	message.spawnInfo.tid = newThreadId;
+	message.spawnInfo.stack = stack;
+	message.spawnInfo.ctid = ctid;
 
-	threadMessagingQueue.send(spawnInfo);
+	threadMessagingQueue.send(message);
 }
 
 [[cheerp::genericjs]]
-void spawnThreadFromUtility()
+void waitForMessage();
+
+[[cheerp::genericjs]]
+void spawnThreadFromUtility(ThreadSpawnInfo spawnInfo)
 {
-	ThreadSpawnInfo spawnInfo = threadMessagingQueue.receive();
 	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
 	client::Blob* blob = __builtin_cheerp_get_threading_blob();
 	threadingObject->set_func(spawnInfo.func);
@@ -263,8 +268,40 @@ void spawnThreadFromUtility()
 	client::WorkerOptions* opts = new client::WorkerOptions();
 	opts->set_name((new client::String("Thread "))->concat(spawnInfo.tid));
 	client::Worker* worker = new client::Worker(client::URL.createObjectURL(blob), opts);
-	worker->set_onmessage(spawnThreadFromUtility);
+	worker->set_onmessage(waitForMessage);
 	worker->postMessage(threadingObject);
+	workerList->set(spawnInfo.tid, worker);
+}
+
+[[cheerp::genericjs]]
+void waitForMessage()
+{
+	while (true)
+	{
+		QueueMessage message = threadMessagingQueue.receive();
+		if (message.type == QueueMessageType::SPAWN_THREAD)
+		{
+			spawnThreadFromUtility(message.spawnInfo);
+			break;
+		}
+		else if (message.type == QueueMessageType::KILL_THREAD)
+		{
+			client::String* tidString = new client::String(message.tid);
+			client::Worker* worker = workerList->get(message.tid);
+			worker->terminate();
+			workerList->delete_(message.tid);
+		}
+		else if (message.type == QueueMessageType::KILL_ALL_THREADS)
+		{
+			auto terminateWorker = [](client::Worker* w) {
+				w->terminate();
+			};
+			workerList->forEach(terminateWorker);
+			workerList->clear();
+			client::self.close();
+			break;
+		}
+	}
 }
 
 [[cheerp::genericjs]]
@@ -277,7 +314,8 @@ void leak_thread()
 [[cheerp::genericjs]]
 void reschedule()
 {
-	client::setTimeout(spawnThreadFromUtility, 0);
+	workerList = new client::Map<int, client::Worker*>();
+	client::setTimeout(waitForMessage, 0);
 }
 
 [[cheerp::wasm]]
@@ -314,6 +352,11 @@ void spawnUtility()
 [[cheerp::genericjs]]
 void worker_close()
 {
+	QueueMessage message;
+	message.type = QueueMessageType::KILL_THREAD;
+	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
+	message.tid = threadingObject->get_tid();
+	threadMessagingQueue.send(message);
 	client::self.close();
 }
 
@@ -423,6 +466,24 @@ long __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 		}
 	}
 	return cpusetsize;
+}
+
+[[cheerp::genericjs]]
+void killAllThreads()
+{
+	QueueMessage message;
+	message.type = QueueMessageType::KILL_ALL_THREADS;
+	threadMessagingQueue.send(message);
+	utilityWorker = nullptr;
+}
+
+long __syscall_exit(long);
+
+long __syscall_exit_group(long code)
+{
+	killAllThreads();
+	__syscall_exit(code);
+	return 0;
 }
 
 }
