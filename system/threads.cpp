@@ -429,15 +429,27 @@ long __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 
 namespace sys_internal {
 
+[[cheerp::genericjs]]
+void closeMainThreadAsWorker()
+{
+	client::self.close();
+}
+
 bool exit_thread()
 {
-	if (!isBrowserMainThread() && clear_child_tid != nullptr)
+	if (!isBrowserMainThread())
 	{
-		// If clear_child_tid is set, write 0 to the address it points to,
-		// and do a FUTEX_WAKE on the address.
-		uint32_t *wake_address = reinterpret_cast<uint32_t*>(clear_child_tid);
-		*clear_child_tid = 0;
-		__syscall_futex(wake_address, FUTEX_WAKE, 1, nullptr, nullptr, 0);
+		// If the main thread runs in a Worker, close it.
+		if (tid == 1)
+			closeMainThreadAsWorker();
+		else if (clear_child_tid != nullptr)
+		{
+			// If clear_child_tid is set, write 0 to the address it points to,
+			// and do a FUTEX_WAKE on the address.
+			uint32_t *wake_address = reinterpret_cast<uint32_t*>(clear_child_tid);
+			*clear_child_tid = 0;
+			__syscall_futex(wake_address, FUTEX_WAKE, 1, nullptr, nullptr, 0);
+		}
 		return true;
 	}
 	return false;
