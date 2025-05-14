@@ -349,7 +349,7 @@ void spawnUtility()
 	utilityWorker->addEventListener("message", callStart);
 }
 
-[[cheerp::genericjs]]
+[[cheerp::genericjs]] [[noreturn]]
 void worker_close()
 {
 	QueueMessage message;
@@ -358,6 +358,8 @@ void worker_close()
 	message.tid = threadingObject->get_tid();
 	threadMessagingQueue.send(message);
 	client::self.close();
+	client::String* throwObj = new client::String("ThreadExit");
+	__builtin_cheerp_throw(throwObj);
 }
 
 long WEAK __syscall_gettid(void)
@@ -490,10 +492,12 @@ long __syscall_exit_group(long code)
 
 namespace sys_internal {
 
-[[cheerp::genericjs]]
+[[cheerp::genericjs]] [[noreturn]]
 void closeMainThreadAsWorker()
 {
 	client::self.close();
+	client::String* throwObj = new client::String("ExitMainThreadWorker");
+	__builtin_cheerp_throw(throwObj);
 }
 
 bool exit_thread()
