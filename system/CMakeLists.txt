@@ -16,7 +16,6 @@ if (LIB_TARGET STREQUAL "asmjs")
 		common.cpp
 		wasi.cpp
 		wasi_shim.cpp
-		divti3.c
 	)
 	ADD_LIBRARY(threads STATIC
 		threads.cpp
