@@ -13,6 +13,13 @@ extern "C" {
 #include "impl.h"
 #include "futex.h"
 
+namespace [[cheerp::genericjs]] client {
+	class CheerpException: public Error {
+	public:
+		CheerpException(const String& msg, bool isExit, int code);
+	};
+}
+
 namespace {
 
 class [[cheerp::genericjs]] CheerpStringBuilder
@@ -159,9 +166,10 @@ double performanceNow()
 	return client::performance.now();
 }
 
-[[cheerp::genericjs]] [[noreturn]] void raiseSignal()
+[[cheerp::genericjs]] [[noreturn]] void raiseSignal(int code)
 {
-	__asm__("throw new Error('Cheerp: Signal raised')");
+	client::CheerpException* wrapper = new client::CheerpException("Cheerp: Signal raised", true, code);
+	__builtin_cheerp_throw(wrapper);
 	__builtin_unreachable();
 }
 
@@ -210,7 +218,7 @@ long WEAK __syscall_exit(long code)
 		return 0;
 	}
 
-	raiseSignal();
+	raiseSignal(code);
 	return 0;
 }
 
