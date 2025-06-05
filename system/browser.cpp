@@ -168,7 +168,9 @@ double performanceNow()
 
 [[cheerp::genericjs]] [[noreturn]] void raiseSignal(int code)
 {
-	client::CheerpException* wrapper = new client::CheerpException("Cheerp: Signal raised", true, code);
+	client::String* exitMessageText = new client::String("Program exited with code ");
+	client::String* exitMessage = exitMessageText->concat(new client::String(code));
+	client::CheerpException* wrapper = new client::CheerpException(exitMessage, true, code);
 	__builtin_cheerp_throw(wrapper);
 	__builtin_unreachable();
 }

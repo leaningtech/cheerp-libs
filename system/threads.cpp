@@ -346,7 +346,7 @@ void callStart()
 	// We wrap the entrypoint into a try/catch for the exit exception.
 	// This code is a duplication of compileEntryPoint in the CheerpWriter.
 	client::EventListener* jsStart = cheerp::Callback(startWrapper);
-	__asm__("try{%0()}catch(e){if(e instanceof CheerpException&&e.isExit){if(e.code!=0)console.log('Program failed. Exit code:', e.code);}else{throw(e);}}" :: "r"(jsStart));
+	__asm__("try{%0()}catch(e){if(!(e instanceof CheerpException&&e.isExit&&e.code==0))throw(e);}" :: "r"(jsStart));
 	__builtin_cheerp_thread_setup_resolve();
 }
 
