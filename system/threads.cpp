@@ -509,9 +509,17 @@ void closeMainThreadAsWorker()
 	__builtin_cheerp_throw(throwObj);
 }
 
+[[cheerp::genericjs]]
+bool doesSelfExist()
+{
+	bool selfExists;
+	__asm__("globalThis.self!==undefined" : "=r"(selfExists));
+	return selfExists;
+}
+
 bool exit_thread()
 {
-	if (!isBrowserMainThread())
+	if (!isBrowserMainThread() && doesSelfExist())
 	{
 		// If the main thread runs in a Worker, close it.
 		if (tid == 1)
