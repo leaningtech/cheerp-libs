@@ -34,6 +34,8 @@ enum atomicWaitStatus {
 
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
+[[cheerp::genericjs]] client::Object* __builtin_cheerp_get_thread_setup_resolve();
+[[cheerp::genericjs]] client::Object* __builtin_cheerp_get_thread_setup_reject();
 
 [[cheerp::genericjs]] client::Worker* utilityWorker = nullptr;
 [[cheerp::genericjs]] client::Map<int, client::Worker*>* workerList = nullptr;
@@ -346,8 +348,9 @@ void callStart()
 	// We wrap the entrypoint into a try/catch for the exit exception.
 	// This code is a duplication of compileEntryPoint in the CheerpWriter.
 	client::EventListener* jsStart = cheerp::Callback(startWrapper);
-	__asm__("try{%0()}catch(e){if(!(e instanceof CheerpException&&e.isExit&&e.code==0))throw(e);}" :: "r"(jsStart));
-	__builtin_cheerp_thread_setup_resolve();
+	client::Object* threadSetupResolve = __builtin_cheerp_get_thread_setup_resolve();
+	client::Object* threadSetupReject = __builtin_cheerp_get_thread_setup_reject();
+	__asm__("try{%0();%1();}catch(e){if(!(e instanceof CheerpException&&e.isExit&&e.code==0))%2(e);else %1();}" :: "r"(jsStart), "r"(threadSetupResolve), "r"(threadSetupReject));
 }
 
 [[cheerp::genericjs]]
