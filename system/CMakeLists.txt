@@ -14,8 +14,14 @@ SET(CMAKE_CXX_STANDARD 17)
 if (LIB_TARGET STREQUAL "asmjs")
 	ADD_LIBRARY(wasi STATIC
 		common.cpp
+		basic.cpp
 		wasi.cpp
+		wasi_main.cpp
 		wasi_shim.cpp
+	)
+	ADD_LIBRARY(cheerpos STATIC
+		basic.cpp
+		wasi_main.cpp
 	)
 	ADD_LIBRARY(threads STATIC
 		threads.cpp
@@ -24,6 +30,7 @@ endif ()
 
 ADD_LIBRARY(system STATIC
 	common.cpp
+	basic.cpp
 	browser.cpp
 	divti3.c
 )
@@ -33,6 +40,7 @@ ADD_LIBRARY(system STATIC
 INSTALL(TARGETS system DESTINATION "lib/${LIB_TARGET}")
 
 if (LIB_TARGET STREQUAL "asmjs")
+	INSTALL(TARGETS cheerpos DESTINATION "lib/${LIB_TARGET}")
 	INSTALL(TARGETS wasi DESTINATION "lib/${LIB_TARGET}")
 	INSTALL(TARGETS threads DESTINATION "lib/${LIB_TARGET}")
 endif()
