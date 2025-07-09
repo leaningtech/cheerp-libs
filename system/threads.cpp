@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <sched.h>
 #include <atomic>
+#include <sysexits.h>
 
 #include <cheerpintrin.h>
 #define LEAN_CXX_LIB
@@ -496,6 +497,21 @@ long __syscall_exit_group(long code)
 {
 	killAllThreads();
 	__syscall_exit(code);
+	return 0;
+}
+
+long __syscall_tkill(pid_t tid, int sig)
+{
+	// If we receive a SIGCANCEL here, we kill the thread specified. In musl, SIGCANCEL is 33.
+	if (sig == 33)
+	{
+		QueueMessage message;
+		message.type = QueueMessageType::KILL_THREAD;
+		message.tid = tid;
+		threadMessagingQueue.send(message);
+	}
+	else
+		__syscall_exit(EX_OSERR);
 	return 0;
 }
 
