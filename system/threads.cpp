@@ -288,7 +288,6 @@ void waitForMessage()
 		}
 		else if (message.type == QueueMessageType::KILL_THREAD)
 		{
-			client::String* tidString = new client::String(message.tid);
 			client::Worker* worker = workerList->get(message.tid);
 			worker->terminate();
 			workerList->delete_(message.tid);
