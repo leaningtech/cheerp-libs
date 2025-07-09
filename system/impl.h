@@ -12,6 +12,7 @@ namespace sys_internal {
 	double monotonic_time_now();
 	double cpu_time_now();
 	bool exit_thread();
+	long tkill(pid_t tid, int sig);
 }
 
 extern _Thread_local int tid;
