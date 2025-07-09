@@ -215,11 +215,6 @@ long WEAK __syscall_munmap(long a1, long length)
 	return -ENOSYS;
 }
 
-int WEAK pthread_cancel(struct __pthread* t)
-{
-	return __syscall_exit(EX_SOFTWARE);
-}
-
 [[cheerp::genericjs]] static size_t client_to_utf8(char *dest, size_t dlen, const client::String *str) {
 	constexpr uint32_t REPLACEMENT_CHARACTER = 0xFFFD;
 	constexpr uint32_t MAX_CODEPOINT = 0x10FFFF;
