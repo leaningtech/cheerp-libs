@@ -142,10 +142,9 @@ long WEAK __syscall_clock_gettime64(int clock_id, struct timespec* tp)
 
 long __syscall_exit(long);
 
-long WEAK __syscall_tkill(long a1, ...)
+long WEAK __syscall_tkill(pid_t tid, int sig)
 {
-	__syscall_exit(EX_OSERR);
-	return 0;
+	return sys_internal::tkill(tid, sig);
 }
 
 long WEAK __syscall_exit_group(long code,...)
@@ -413,3 +412,13 @@ long WEAK __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* 
 }
 
 }
+
+namespace sys_internal {
+
+long WEAK tkill(pid_t tid, int sig)
+{
+	__syscall_exit(EX_OSERR);
+	return 0;
+}
+
+} // namespace sys_internal
