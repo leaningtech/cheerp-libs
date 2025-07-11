@@ -44,6 +44,11 @@ double cpu_time_now()
 	return err? std::numeric_limits<double>::quiet_NaN() : time;
 }
 
+void killAllThreads()
+{
+	// This function is empty, there are no threads to close in WASI mode.
+}
+
 } //namespace sys_internal
 
 namespace {

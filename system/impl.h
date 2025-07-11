@@ -13,6 +13,8 @@ namespace sys_internal {
 	double cpu_time_now();
 	bool exit_thread();
 	long tkill(pid_t tid, int sig);
+	long exit_group(long code);
+	[[cheerp::wasm]] void killAllThreads();
 }
 
 extern _Thread_local int tid;
@@ -118,6 +120,7 @@ public:
 extern "C" {
 void __syscall_main_args(int* argc, char*** argv);
 bool testUseAtomicWait();
+[[cheerp::genericjs]] void actuallyKillThreads();
 }
 
 #endif //_IMPL_H_

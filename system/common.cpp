@@ -149,8 +149,7 @@ long WEAK __syscall_tkill(pid_t tid, int sig)
 
 long WEAK __syscall_exit_group(long code,...)
 {
-	__syscall_exit(code);
-	return 0;
+	return sys_internal::exit_group(code);
 }
 
 
@@ -418,6 +417,12 @@ namespace sys_internal {
 long WEAK tkill(pid_t tid, int sig)
 {
 	__syscall_exit(EX_OSERR);
+	return 0;
+}
+
+long WEAK exit_group(long code)
+{
+	__syscall_exit(code);
 	return 0;
 }
 
