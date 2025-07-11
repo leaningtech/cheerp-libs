@@ -14,6 +14,7 @@ namespace sys_internal {
 	bool exit_thread();
 	long tkill(pid_t tid, int sig);
 	long exit_group(long code);
+	long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask);
 	[[cheerp::wasm]] void killAllThreads();
 }
 

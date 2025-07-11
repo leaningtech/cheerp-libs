@@ -400,14 +400,7 @@ long WEAK __syscall_set_tid_address(int *tidptr)
 
 long WEAK __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 {
-	// Only a pid of 0 (the current process) is supported.
-	assert(pid == 0);
-
-	unsigned char* set = reinterpret_cast<unsigned char*>(mask);
-	set[0] = 1;
-	for (int i = 1; i < cpusetsize; i++)
-		set[i] = 0;
-	return cpusetsize;
+	return sys_internal::sched_getaffinity(pid, cpusetsize, mask);
 }
 
 }
@@ -424,6 +417,18 @@ long WEAK exit_group(long code)
 {
 	__syscall_exit(code);
 	return 0;
+}
+
+long WEAK sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
+{
+	// Only a pid of 0 (the current process) is supported.
+	assert(pid == 0);
+
+	unsigned char* set = reinterpret_cast<unsigned char*>(mask);
+	set[0] = 1;
+	for (int i = 1; i < cpusetsize; i++)
+		set[i] = 0;
+	return cpusetsize;
 }
 
 } // namespace sys_internal
