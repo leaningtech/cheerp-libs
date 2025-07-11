@@ -452,31 +452,6 @@ int getHardwareConcurrency()
 	return client::navigator.get_hardwareConcurrency();
 }
 
-long __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
-{
-	// Only a pid of 0 (the current process) is supported.
-	assert(pid == 0);
-
-	int amountCores = getHardwareConcurrency();
-	unsigned char* set = reinterpret_cast<unsigned char*>(mask);
-	for (int i = 0; i < cpusetsize; i++)
-	{
-		if (amountCores == 0)
-			set[i] = 0;
-		else if (amountCores >= 8)
-		{
-			set[i] = 255;
-			amountCores -= 8;
-		}
-		else
-		{
-			set[i] = (1 << amountCores) - 1;
-			amountCores = 0;
-		}
-	}
-	return cpusetsize;
-}
-
 [[cheerp::genericjs]]
 void actuallyKillThreads()
 {
@@ -548,6 +523,31 @@ long exit_group(long code)
 	killAllThreads();
 	__syscall_exit(code);
 	return 0;
+}
+
+long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
+{
+	// Only a pid of 0 (the current process) is supported.
+	assert(pid == 0);
+
+	int amountCores = getHardwareConcurrency();
+	unsigned char* set = reinterpret_cast<unsigned char*>(mask);
+	for (int i = 0; i < cpusetsize; i++)
+	{
+		if (amountCores == 0)
+			set[i] = 0;
+		else if (amountCores >= 8)
+		{
+			set[i] = 255;
+			amountCores -= 8;
+		}
+		else
+		{
+			set[i] = (1 << amountCores) - 1;
+			amountCores = 0;
+		}
+	}
+	return cpusetsize;
 }
 
 } // namespace sys_internal
