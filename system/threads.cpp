@@ -446,11 +446,6 @@ long WEAK __syscall_clone4(int (*func)(void *), void *stack, int flags, void *ar
 	return newThreadId;
 }
 
-long __syscall_membarrier(int cmd, unsigned int flags)
-{
-	return 0;
-}
-
 [[cheerp::genericjs]]
 int getHardwareConcurrency()
 {
