@@ -483,7 +483,7 @@ long __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 }
 
 [[cheerp::genericjs]]
-void killAllThreads()
+void actuallyKillThreads()
 {
 	QueueMessage message;
 	message.type = QueueMessageType::KILL_ALL_THREADS;
@@ -493,14 +493,7 @@ void killAllThreads()
 
 long __syscall_exit(long);
 
-long __syscall_exit_group(long code)
-{
-	killAllThreads();
-	__syscall_exit(code);
-	return 0;
-}
-
-}
+} // extern "C"
 
 namespace sys_internal {
 
@@ -552,6 +545,13 @@ long tkill(pid_t tid, int sig)
 	}
 	else
 		__syscall_exit(EX_OSERR);
+	return 0;
+}
+
+long exit_group(long code)
+{
+	killAllThreads();
+	__syscall_exit(code);
 	return 0;
 }
 

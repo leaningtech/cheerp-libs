@@ -202,6 +202,12 @@ bool WEAK exit_thread()
 	return false;
 }
 
+[[cheerp::wasm]]
+void killAllThreads()
+{
+	actuallyKillThreads();
+}
+
 } //namespace sys_internal
 
 extern "C" {
