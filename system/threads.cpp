@@ -374,11 +374,6 @@ void worker_close()
 	__builtin_cheerp_throw(throwObj);
 }
 
-long WEAK __syscall_gettid(void)
-{
-	return tid;
-}
-
 [[cheerp::wasm]]
 [[cheerp::jsexport]]
 void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newThreadId, unsigned int stack, unsigned int ctid)

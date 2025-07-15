@@ -152,6 +152,10 @@ long WEAK __syscall_exit_group(long code,...)
 	return sys_internal::exit_group(code);
 }
 
+long WEAK __syscall_gettid(void)
+{
+	return tid;
+}
 
 long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
