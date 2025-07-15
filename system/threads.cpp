@@ -82,142 +82,6 @@ uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
 
 }
 
-long __syscall_futex(uint32_t* uaddr, int futex_op, ...)
-{
-	bool isPrivate = futex_op & FUTEX_PRIVATE;
-	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
-	futex_op &= ~FUTEX_PRIVATE;
-	futex_op &= ~FUTEX_CLOCK_REALTIME;
-	(void)isPrivate;
-	(void)isRealTime;
-
-	// These ops are currently not implemented, since musl doesn't use them.
-	assert(futex_op != FUTEX_FD);
-	assert(futex_op != FUTEX_WAKE_OP);
-	assert(futex_op != FUTEX_WAIT_BITSET);
-	assert(futex_op != FUTEX_WAKE_BITSET);
-	assert(futex_op != FUTEX_LOCK_PI2);
-	assert(futex_op != FUTEX_TRYLOCK_PI);
-	assert(futex_op != FUTEX_CMP_REQUEUE_PI);
-	assert(futex_op != FUTEX_WAIT_REQUEUE_PI);
-
-	bool isBrowserMain = isBrowserMainThread();
-
-	switch (futex_op)
-	{
-		case FUTEX_WAKE:
-		{
-			va_list ap;
-			va_start(ap, futex_op);
-			uint32_t val = va_arg(ap, uint32_t);
-			va_end(ap);
-
-			return wakeThreadsFutex(uaddr, val);
-		}
-		case FUTEX_WAIT:
-		{
-			va_list ap;
-			va_start(ap, futex_op);
-			uint32_t val = va_arg(ap, uint32_t);
-			const struct timespec *ts = va_arg(ap, const struct timespec *);
-			va_end(ap);
-			int64_t timeout = -1;
-			if (ts != nullptr)
-				timeout = ts->tv_sec * 1000000000 + ts->tv_nsec;
-
-			// If this is the main thread, it's illegal to do a futex wait operation.
-			// Instead, we busy wait while checking a special value.
-			if (isBrowserMain)
-			{
-				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
-				futexSpinLock.lock();
-				if (*uaddr != val)
-				{
-					futexSpinLock.unlock();
-					return -EAGAIN;
-				}
-				mainThreadWaitAddress.store(uaddr);
-				if (*uaddr != val)
-				{
-					mainThreadWaitAddress.store(0);
-					futexSpinLock.unlock();
-					return -EAGAIN;
-				}
-				futexSpinLock.unlock();
-				int64_t startTime = 0;
-				if (timeout != -1)
-				{
-					struct timespec startTimeStruct;
-					clock_gettime(CLOCK_MONOTONIC, &startTimeStruct);
-					startTime = startTimeStruct.tv_sec * 1000000000 + startTimeStruct.tv_nsec;
-				}
-				while (mainThreadWaitAddress.load() != 0)
-				{
-					if (timeout != -1)
-					{
-						struct timespec timeNowStruct;
-						clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
-						int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
-						if (timeNow - startTime >= timeout)
-							return -ETIMEDOUT;
-					}
-				}
-			}
-			else
-			{
-				uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
-				if (ret == 1)
-					return -EAGAIN; // Value at uaddr did not match val.
-				else if (ret == 2)
-					return -ETIMEDOUT;
-			}
-			return 0;
-		}
-		case FUTEX_REQUEUE:
-		case FUTEX_CMP_REQUEUE:
-		{
-			va_list ap;
-			va_start(ap, futex_op);
-			uint32_t val = va_arg(ap, uint32_t);
-			uint32_t val2 = va_arg(ap, unsigned long);
-			uint32_t* uaddr2 = va_arg(ap, uint32_t*);
-
-			if (futex_op == FUTEX_CMP_REQUEUE)
-			{
-				uint32_t val3 = va_arg(ap, uint32_t);
-				if (*uaddr != val3)
-				{
-					va_end(ap);
-					return -EAGAIN;
-				}
-			}
-			va_end(ap);
-
-			// We wake up val + val2 threads. The requeued threads are spurious wake-ups.
-			uint32_t threadsWokenUp = wakeThreadsFutex(uaddr, val + val2);
-
-			if (futex_op == FUTEX_REQUEUE && threadsWokenUp >= val)
-				return val;
-			return threadsWokenUp;
-		}
-		case FUTEX_LOCK_PI:
-		{
-			// TODO
-			assert(false);
-		}
-		case FUTEX_UNLOCK_PI:
-		{
-			// TODO
-			assert(false);
-		}
-		default:
-		{
-			// This should be unreachable, all unhandled cases are asserted for at the top.
-			assert(false);
-		}
-	}
-}
-
 [[cheerp::wasm]]
 long __syscall_set_thread_area(unsigned long tp);
 
@@ -457,6 +321,7 @@ void actuallyKillThreads()
 }
 
 long __syscall_exit(long);
+long __syscall_futex(uint32_t* uaddr, int futex_op, ...);
 
 } // extern "C"
 
@@ -543,6 +408,130 @@ long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 		}
 	}
 	return cpusetsize;
+}
+
+long futex(uint32_t* uaddr, int futex_op, va_list args)
+{
+	bool isPrivate = futex_op & FUTEX_PRIVATE;
+	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
+	futex_op &= ~FUTEX_PRIVATE;
+	futex_op &= ~FUTEX_CLOCK_REALTIME;
+	(void)isPrivate;
+	(void)isRealTime;
+
+	// These ops are currently not implemented, since musl doesn't use them.
+	assert(futex_op != FUTEX_FD);
+	assert(futex_op != FUTEX_WAKE_OP);
+	assert(futex_op != FUTEX_WAIT_BITSET);
+	assert(futex_op != FUTEX_WAKE_BITSET);
+	assert(futex_op != FUTEX_LOCK_PI2);
+	assert(futex_op != FUTEX_TRYLOCK_PI);
+	assert(futex_op != FUTEX_CMP_REQUEUE_PI);
+	assert(futex_op != FUTEX_WAIT_REQUEUE_PI);
+
+	bool isBrowserMain = isBrowserMainThread();
+
+	switch (futex_op)
+	{
+		case FUTEX_WAKE:
+		{
+			uint32_t val = va_arg(args, uint32_t);
+
+			return wakeThreadsFutex(uaddr, val);
+		}
+		case FUTEX_WAIT:
+		{
+			uint32_t val = va_arg(args, uint32_t);
+			const struct timespec *ts = va_arg(args, const struct timespec *);
+			int64_t timeout = -1;
+			if (ts != nullptr)
+				timeout = ts->tv_sec * 1000000000 + ts->tv_nsec;
+
+			// If this is the main thread, it's illegal to do a futex wait operation.
+			// Instead, we busy wait while checking a special value.
+			if (isBrowserMain)
+			{
+				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
+				futexSpinLock.lock();
+				if (*uaddr != val)
+				{
+					futexSpinLock.unlock();
+					return -EAGAIN;
+				}
+				mainThreadWaitAddress.store(uaddr);
+				if (*uaddr != val)
+				{
+					mainThreadWaitAddress.store(0);
+					futexSpinLock.unlock();
+					return -EAGAIN;
+				}
+				futexSpinLock.unlock();
+				int64_t startTime = 0;
+				if (timeout != -1)
+				{
+					struct timespec startTimeStruct;
+					clock_gettime(CLOCK_MONOTONIC, &startTimeStruct);
+					startTime = startTimeStruct.tv_sec * 1000000000 + startTimeStruct.tv_nsec;
+				}
+				while (mainThreadWaitAddress.load() != 0)
+				{
+					if (timeout != -1)
+					{
+						struct timespec timeNowStruct;
+						clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
+						int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
+						if (timeNow - startTime >= timeout)
+							return -ETIMEDOUT;
+					}
+				}
+			}
+			else
+			{
+				uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
+				if (ret == 1)
+					return -EAGAIN; // Value at uaddr did not match val.
+				else if (ret == 2)
+					return -ETIMEDOUT;
+			}
+			return 0;
+		}
+		case FUTEX_REQUEUE:
+		case FUTEX_CMP_REQUEUE:
+		{
+			uint32_t val = va_arg(args, uint32_t);
+			uint32_t val2 = va_arg(args, unsigned long);
+			uint32_t* uaddr2 = va_arg(args, uint32_t*);
+
+			if (futex_op == FUTEX_CMP_REQUEUE)
+			{
+				uint32_t val3 = va_arg(args, uint32_t);
+				if (*uaddr != val3)
+					return -EAGAIN;
+			}
+
+			// We wake up val + val2 threads. The requeued threads are spurious wake-ups.
+			uint32_t threadsWokenUp = wakeThreadsFutex(uaddr, val + val2);
+
+			if (futex_op == FUTEX_REQUEUE && threadsWokenUp >= val)
+				return val;
+			return threadsWokenUp;
+		}
+		case FUTEX_LOCK_PI:
+		{
+			// TODO
+			assert(false);
+		}
+		case FUTEX_UNLOCK_PI:
+		{
+			// TODO
+			assert(false);
+		}
+		default:
+		{
+			// This should be unreachable, all unhandled cases are asserted for at the top.
+			assert(false);
+		}
+	}
 }
 
 } // namespace sys_internal
