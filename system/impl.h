@@ -15,6 +15,7 @@ namespace sys_internal {
 	long tkill(pid_t tid, int sig);
 	long exit_group(long code);
 	long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask);
+	long futex(uint32_t* uaddr, int futex_op, va_list args);
 	[[cheerp::wasm]] void killAllThreads();
 }
 
