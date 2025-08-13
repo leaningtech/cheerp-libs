@@ -9,7 +9,7 @@ char* volatile _heapStart = (char*)0xdeadbeef;
 char* volatile _heapEnd = (char*)0xdeadbeef;
 #endif
 
-#if defined(__CHEERP__) && defined(__ASMJS__)
+#ifdef __ASMJS__
 [[cheerp::wasm]]
 #endif
 long __syscall_set_thread_area(unsigned long tp)
