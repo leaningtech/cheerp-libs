@@ -30,14 +30,10 @@ void* __dso_handle = NULL;
 
 extern "C" {
 
-
 #ifdef __ASMJS__
-// HACK: The value of this variables will be rewritten to the correct heap start
-// and end by the compiler backend
-char* volatile _heapStart = (char*)0xdeadbeef;
-char* volatile _heapEnd = (char*)0xdeadbeef;
+extern char* volatile _heapStart;
+extern char* volatile _heapEnd;
 #endif
-
 
 long WEAK __syscall_ioctl(long fd, long req, void* arg)
 {
