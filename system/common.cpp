@@ -36,8 +36,6 @@ extern "C" {
 // and end by the compiler backend
 char* volatile _heapStart = (char*)0xdeadbeef;
 char* volatile _heapEnd = (char*)0xdeadbeef;
-
-char* _heapCur = 0;
 #endif
 
 
