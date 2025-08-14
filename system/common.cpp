@@ -216,6 +216,22 @@ long WEAK __syscall_munmap(long a1, long length)
 	return -ENOSYS;
 }
 
+[[cheerp::genericjs]] static void populateRandomBuffer(uint8_t* buf, uint32_t bufLen)
+{
+	// NOTE: Math.random() never returns exactly 1.0
+	// TODO: Use crypto APIs when available
+	for(uint32_t i=0;i<bufLen;i++)
+	{
+		buf[i] = uint8_t(client::Math.random() * 256);
+	}
+}
+
+long WEAK __syscall_getrandom(void* buf, long buflen, unsigned int flags)
+{
+	populateRandomBuffer(reinterpret_cast<uint8_t*>(buf), buflen);
+	return buflen;
+}
+
 [[cheerp::genericjs]] static size_t client_to_utf8(char *dest, size_t dlen, const client::String *str) {
 	constexpr uint32_t REPLACEMENT_CHARACTER = 0xFFFD;
 	constexpr uint32_t MAX_CODEPOINT = 0x10FFFF;
