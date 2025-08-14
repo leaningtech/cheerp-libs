@@ -27,12 +27,6 @@ namespace [[cheerp::genericjs]] client {
 	};
 }
 
-enum atomicWaitStatus {
-	UNINITIALIZED = 0,
-	YES,
-	NO,
-};
-
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
 [[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
 [[cheerp::genericjs]] client::Object* __builtin_cheerp_get_thread_setup_resolve();
@@ -48,20 +42,6 @@ extern "C" {
 void _start();
 
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
-
-bool isBrowserMainThread()
-{
-	static _Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
-	if (canUseAtomicWait == UNINITIALIZED)
-	{
-		if (testUseAtomicWait())
-			canUseAtomicWait = YES;
-		else
-			canUseAtomicWait = NO;
-	}
-
-	return (canUseAtomicWait == NO);
-}
 
 uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
 {
@@ -410,7 +390,7 @@ long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 	return cpusetsize;
 }
 
-long futex(uint32_t* uaddr, int futex_op, va_list args)
+long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 {
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
 	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
@@ -428,8 +408,6 @@ long futex(uint32_t* uaddr, int futex_op, va_list args)
 	assert(futex_op != FUTEX_TRYLOCK_PI);
 	assert(futex_op != FUTEX_CMP_REQUEUE_PI);
 	assert(futex_op != FUTEX_WAIT_REQUEUE_PI);
-
-	bool isBrowserMain = isBrowserMainThread();
 
 	switch (futex_op)
 	{
@@ -449,7 +427,7 @@ long futex(uint32_t* uaddr, int futex_op, va_list args)
 
 			// If this is the main thread, it's illegal to do a futex wait operation.
 			// Instead, we busy wait while checking a special value.
-			if (isBrowserMain)
+			if (!canUseAtomics)
 			{
 				// Manually test the value at uaddr against val. If they do not match, return EAGAIN.
 				futexSpinLock.lock();

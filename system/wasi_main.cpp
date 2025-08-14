@@ -1,7 +1,9 @@
 // Copyright 2023-2025 Leaning Technologies
 
+#include <cstdarg>
 #include <sysexits.h>
 #include "wasi_api.h"
+#include "impl.h"
 
 extern "C" {
 
@@ -84,4 +86,12 @@ void __syscall_main_environ()
 	environ = cheerp_environ;
 }
 
+} // extern "C"
+
+namespace sys_internal {
+long futex_wrapper(uint32_t* uaddr, int futex_op, va_list args)
+{
+	return futex(uaddr, futex_op, true, args);
 }
+
+} // namespace sys_internal

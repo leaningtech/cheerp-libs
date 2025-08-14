@@ -20,6 +20,12 @@ namespace [[cheerp::genericjs]] client {
 	};
 }
 
+enum atomicWaitStatus {
+	UNINITIALIZED = 0,
+	YES,
+	NO,
+};
+
 namespace {
 
 class [[cheerp::genericjs]] CheerpStringBuilder
@@ -200,6 +206,26 @@ double cpu_time_now()
 bool WEAK exit_thread()
 {
 	return false;
+}
+
+bool isBrowserMainThread()
+{
+	static _Thread_local atomicWaitStatus canUseAtomicWait = UNINITIALIZED;
+	if (canUseAtomicWait == UNINITIALIZED)
+	{
+		if (testUseAtomicWait())
+			canUseAtomicWait = YES;
+		else
+			canUseAtomicWait = NO;
+	}
+
+	return (canUseAtomicWait == NO);
+}
+
+long futex_wrapper(uint32_t* uaddr, int futex_op, va_list args)
+{
+	bool canUseAtomic = !isBrowserMainThread();
+	return futex(uaddr, futex_op, canUseAtomic, args);
 }
 
 [[cheerp::wasm]]
