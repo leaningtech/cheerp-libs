@@ -22,6 +22,7 @@ if (LIB_TARGET STREQUAL "asmjs")
 	ADD_LIBRARY(cheerpos STATIC
 		basic.cpp
 		wasi_main.cpp
+		wasi_shim.cpp
 	)
 	ADD_LIBRARY(threads STATIC
 		threads.cpp
