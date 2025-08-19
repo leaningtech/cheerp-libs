@@ -41,4 +41,15 @@ long __syscall_open(const char* pathname, int flags, ...)
 	return __syscall_open_3(pathname, flags, mode);
 }
 
+long __syscall_fcntl64_3(int fd, int op, int arg);
+
+long __syscall_fcntl64(int fd, int op, ...)
+{
+	va_list args;
+	va_start(args, op);
+	int arg = va_arg(args, int);
+	va_end(args);
+	return __syscall_fcntl64_3(fd, op, arg);
+}
+
 }
