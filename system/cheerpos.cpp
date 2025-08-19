@@ -1,5 +1,6 @@
 // Copyright 2025 Leaning Technologies
 
+#include <errno.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -18,6 +19,12 @@ void *dlopen(const char *file, int mode)
 void* __dlsym_time64(void* handle, const char* name)
 {
 	return __dl_symbol(handle, name);
+}
+
+long __syscall_statx(long a1,...)
+{
+	// Make this fail to reach the 64-bit versions
+	return -ENOSYS;
 }
 
 // Forward variadic syscalls to extended versions, we cannot use variadic calls across user/kernel boundary
