@@ -21,6 +21,7 @@ if (LIB_TARGET STREQUAL "asmjs")
 	)
 	ADD_LIBRARY(cheerpos STATIC
 		basic.cpp
+		cheerpos.cpp
 		wasi_main.cpp
 		wasi_shim.cpp
 	)
