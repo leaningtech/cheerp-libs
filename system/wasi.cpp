@@ -29,19 +29,22 @@ double real_time_now()
 {
 	uint64_t time;
 	__wasi_errno_t err = __wasi_clock_time_get(__WASI_CLOCKID_REALTIME, 0, &time);
-	return err? std::numeric_limits<double>::quiet_NaN() : time;
+	double ret = double(time)/1000000;
+	return err? std::numeric_limits<double>::quiet_NaN() : ret;
 }
 double monotonic_time_now()
 {
 	uint64_t time;
 	__wasi_errno_t err = __wasi_clock_time_get(__WASI_CLOCKID_MONOTONIC, 0, &time);
-	return err? std::numeric_limits<double>::quiet_NaN() : time;
+	double ret = double(time)/1000000;
+	return err? std::numeric_limits<double>::quiet_NaN() : ret;
 }
 double cpu_time_now()
 {
 	uint64_t time;
 	__wasi_errno_t err = __wasi_clock_time_get(__WASI_CLOCKID_PROCESS_CPUTIME_ID, 0, &time);
-	return err? std::numeric_limits<double>::quiet_NaN() : time;
+	double ret = double(time)/1000000;
+	return err? std::numeric_limits<double>::quiet_NaN() : ret;
 }
 
 void killAllThreads()
