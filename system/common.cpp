@@ -171,11 +171,6 @@ long WEAK __syscall_rt_sigprocmask(long a1, ...)
 	return 0;
 }
 
-long WEAK __syscall_futex_time64(long a1,...)
-{
-	return -ENOSYS;
-}
-
 long WEAK __syscall_clock_gettime32(long a1,...)
 {
 	return -ENOSYS;
