@@ -1,6 +1,7 @@
 // Copyright 2025 Leaning Technologies
 
 #include <errno.h>
+#include <setjmp.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -8,6 +9,8 @@ extern "C" {
 
 extern void* __dl_open(const char* file, int mode);
 extern void* __dl_symbol(void* handle, const char* name);
+extern int __exc_setjmp(void* buf);
+extern void __exc_longjmp(void* buf, int val);
 
 // Implement dlopen / dlsym at the kernel level
 void *dlopen(const char *file, int mode)
@@ -19,6 +22,24 @@ void *dlopen(const char *file, int mode)
 void* __dlsym_time64(void* handle, const char* name)
 {
 	return __dl_symbol(handle, name);
+}
+
+// We must make sure the syscall itself is contained in the caller, otherwise
+// we won't observe the correct return address
+__attribute__((always_inline)) int setjmp(jmp_buf buf)
+{
+	// Allocate an unused stack variable used as a marker during frame resolution
+	int stackMarker;
+	// Unsure if there is a convention about the meaning of the slots
+	buf->__jb[0] = reinterpret_cast<unsigned long>(&stackMarker);
+	// The kernel will populate other data
+	return __exc_setjmp(buf);
+}
+
+void longjmp(jmp_buf env, int val)
+{
+	__exc_longjmp(env, val);
+	__builtin_unreachable();
 }
 
 long __syscall_statx(long a1,...)
