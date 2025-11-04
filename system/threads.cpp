@@ -28,7 +28,7 @@ namespace [[cheerp::genericjs]] client {
 }
 
 [[cheerp::genericjs]] client::ThreadingObject* __builtin_cheerp_get_threading_object();
-[[cheerp::genericjs]] client::Blob* __builtin_cheerp_get_threading_blob();
+[[cheerp::genericjs]] client::String* __builtin_cheerp_get_threading_script();
 [[cheerp::genericjs]] client::Object* __builtin_cheerp_get_thread_setup_resolve();
 [[cheerp::genericjs]] client::Object* __builtin_cheerp_get_thread_setup_reject();
 
@@ -73,7 +73,7 @@ void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, i
 	if (utilityWorker == nullptr)
 	{
 		client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
-		client::Blob* blob = __builtin_cheerp_get_threading_blob();
+		client::String* script = __builtin_cheerp_get_threading_script();
 		threadingObject->set_func(fp);
 		threadingObject->set_args(args);
 		threadingObject->set_tls(tls);
@@ -82,7 +82,7 @@ void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, i
 		threadingObject->set_ctid(ctid);
 		client::WorkerOptions* opts = new client::WorkerOptions();
 		opts->set_name("Utility");
-		utilityWorker = new client::Worker(client::URL.createObjectURL(blob), opts);
+		utilityWorker = new client::Worker(client::URL.createObjectURL(new client::Blob(new client::Array(script))), opts);
 		utilityWorker->postMessage(threadingObject);
 		return;
 	}
@@ -105,7 +105,7 @@ void waitForMessage();
 void spawnThreadFromUtility(ThreadSpawnInfo spawnInfo)
 {
 	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
-	client::Blob* blob = __builtin_cheerp_get_threading_blob();
+	client::String* script = __builtin_cheerp_get_threading_script();
 	threadingObject->set_func(spawnInfo.func);
 	threadingObject->set_args(spawnInfo.args);
 	threadingObject->set_tls(spawnInfo.tls);
@@ -114,7 +114,7 @@ void spawnThreadFromUtility(ThreadSpawnInfo spawnInfo)
 	threadingObject->set_ctid(spawnInfo.ctid);
 	client::WorkerOptions* opts = new client::WorkerOptions();
 	opts->set_name((new client::String("Thread "))->concat(spawnInfo.tid));
-	client::Worker* worker = new client::Worker(client::URL.createObjectURL(blob), opts);
+	client::Worker* worker = new client::Worker(client::URL.createObjectURL(new client::Blob(new client::Array(script))), opts);
 	worker->set_onmessage(waitForMessage);
 	worker->postMessage(threadingObject);
 	workerList->set(spawnInfo.tid, worker);
