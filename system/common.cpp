@@ -142,7 +142,7 @@ long WEAK __syscall_tkill(pid_t tid, int sig)
 	return sys_internal::tkill(tid, sig);
 }
 
-long WEAK __syscall_exit_group(long code,...)
+long WEAK __syscall_exit_group(long code)
 {
 	return sys_internal::exit_group(code);
 }
@@ -166,37 +166,37 @@ int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 	return 0;
 }
 
-long WEAK __syscall_rt_sigprocmask(long a1, ...)
+long WEAK __syscall_rt_sigprocmask(long how, void* set, void* oldset, long sigsetsize)
 {
 	return 0;
 }
 
-long WEAK __syscall_clock_gettime32(long a1,...)
+long WEAK __syscall_timer_gettime32(int timer_id, void* setting)
 {
 	return -ENOSYS;
 }
 
-long WEAK __syscall_gettimeofday_time32(long a1,...)
+long WEAK __syscall_gettimeofday_time32(void* tv, void* tz)
 {
 	return -ENOSYS;
 }
 
-long WEAK __syscall_set_robust_list(long a1, ...)
+long WEAK __syscall_set_robust_list(void* head, long len)
 {
 	return -ENOSYS;
 }
 
-long WEAK __syscall_fcntl64(long a1, ...)
+long WEAK __syscall_fcntl64(long fd, int op, ...)
 {
 	return -ENOSYS;
 }
 
-long WEAK __syscall_fstat64(long a1,...)
+long WEAK __syscall_fstat64(int fd, void* statBuf)
 {
 	return -ENOSYS;
 }
 
-long WEAK __syscall_rt_sigaction(long a1,...)
+long WEAK __syscall_rt_sigaction(long sig, void* actptr, void* oldactptr, long sigsetsize)
 {
 	return -ENOSYS;
 }
