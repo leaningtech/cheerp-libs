@@ -171,7 +171,7 @@ long WEAK __syscall_rt_sigprocmask(long how, void* set, void* oldset, long sigse
 	return 0;
 }
 
-long WEAK __syscall_timer_gettime32(int timer_id, void* setting)
+long WEAK __syscall_clock_gettime32(int timer_id, void* setting)
 {
 	return -ENOSYS;
 }
