@@ -220,14 +220,12 @@ void worker_close()
 
 [[cheerp::wasm]]
 [[cheerp::jsexport]]
-void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newThreadId, unsigned int stack, unsigned int ctid)
+void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newThreadId, unsigned int ctid)
 {
 	// This is the setup for a worker thread.
 	// Set the thread pointer
 	if (tp != 0)
 		__syscall_set_thread_area(tp);
-	// Set the thread stack pointer
-	__builtin_cheerp_stack_restore(reinterpret_cast<void *>(stack));
 	// Assign tid
 	tid = newThreadId;
 	// Set the clear_child_tid if necessary
