@@ -152,15 +152,6 @@ long WEAK __syscall_gettid(void)
 	return tid;
 }
 
-long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
-{
-	va_list args;
-	va_start(args, futex_op);
-	int ret = sys_internal::futex_wrapper(uaddr, futex_op, args);
-	va_end(args);
-	return ret;
-}
-
 int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 {
 	return 0;
@@ -432,11 +423,6 @@ long WEAK sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 	for (int i = 1; i < cpusetsize; i++)
 		set[i] = 0;
 	return cpusetsize;
-}
-
-long WEAK futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
-{
-	return -ENOSYS;
 }
 
 } // namespace sys_internal
