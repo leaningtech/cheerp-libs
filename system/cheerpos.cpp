@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "impl.h"
+
 extern "C" {
 
 extern void* __dl_open(const char* file, int mode);
@@ -85,3 +87,12 @@ long __syscall_fcntl64(int fd, int op, ...)
 }
 
 }
+
+namespace sys_internal {
+
+long futex_wrapper(uint32_t* uaddr, int futex_op, va_list args)
+{
+        return futex(uaddr, futex_op, true, args);
+}
+
+} // namespace sys_internal
