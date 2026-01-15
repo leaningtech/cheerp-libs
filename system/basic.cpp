@@ -1,5 +1,8 @@
 // Copyright 2023-2025 Leaning Technologies
 
+#include <cstdarg>
+#include "impl.h"
+
 extern "C" {
 
 #ifdef __ASMJS__
@@ -18,6 +21,15 @@ long __syscall_set_thread_area(unsigned long tp)
 	__builtin_cheerp_set_thread_pointer(tp);
 #endif
 	return 0;
+}
+
+long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
+{
+	va_list args;
+	va_start(args, futex_op);
+	int ret = sys_internal::futex_wrapper(uaddr, futex_op, args);
+	va_end(args);
+	return ret;
 }
 
 }

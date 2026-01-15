@@ -152,15 +152,6 @@ long WEAK __syscall_gettid(void)
 	return tid;
 }
 
-long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
-{
-	va_list args;
-	va_start(args, futex_op);
-	int ret = sys_internal::futex_wrapper(uaddr, futex_op, args);
-	va_end(args);
-	return ret;
-}
-
 int WEAK __syscall_mprotect(long addr, size_t len, int prot)
 {
 	return 0;
