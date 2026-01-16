@@ -56,7 +56,7 @@ void __syscall_main_args(int* argc_p, char*** argv_p)
 }
 
 static uint8_t environ_buf[32*1024];
-static char* cheerp_environ[32];
+static char* cheerp_environ[1024];
 extern "C" char ** environ;
 void __syscall_main_environ()
 {
@@ -75,7 +75,7 @@ void __syscall_main_environ()
 	if (num_ptrs == 0) {
 		__wasi_proc_exit(EX_SOFTWARE);
 	}
-	if (num_ptrs > 32 || environ_buf_size > 32*1024) {
+	if (num_ptrs > 1024 || environ_buf_size > 32*1024) {
 		__wasi_proc_exit(EX__MAX);
 	}
 
