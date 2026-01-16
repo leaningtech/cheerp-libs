@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "impl.h"
+
 extern "C" {
 
 extern void* __dl_open(const char* file, int mode);
@@ -19,7 +21,7 @@ void *dlopen(const char *file, int mode)
 	return __dl_open(file, strlen(file));
 }
 
-void* __dlsym_time64(void* handle, const char* name)
+void* WEAK __dlsym_time64(void* handle, const char* name)
 {
 	return __dl_symbol(handle, name);
 }
