@@ -16,7 +16,7 @@ char* volatile _heapEnd = (char*)0xdeadbeef;
 #ifdef __ASMJS__
 [[cheerp::wasm]]
 #endif
-long __syscall_set_thread_area(unsigned long tp)
+long WEAK __syscall_set_thread_area(unsigned long tp)
 {
 #if defined(__CHEERP__) && defined(__ASMJS__)
 	__builtin_cheerp_set_thread_pointer(tp);
