@@ -4,6 +4,9 @@
 #include <errno.h>
 #include "impl.h"
 
+_Thread_local int tid = 1;
+_Thread_local int *clear_child_tid = nullptr;
+
 extern "C" {
 
 #ifdef __ASMJS__

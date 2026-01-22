@@ -22,8 +22,6 @@ extern "C" {
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_environ();
 [[cheerp::genericjs]] client::TArray<client::String*>* __builtin_cheerp_argv();
 
-_Thread_local int tid = 1;
-_Thread_local int *clear_child_tid = nullptr;
 // The dso_handle is used internally to call the __cxa_atexit function for global destructors
 // But __cxa_atexit ignores it, so we can just set it to NULL.
 void* __dso_handle = NULL;
