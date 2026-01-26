@@ -88,4 +88,16 @@ long __syscall_fcntl64(int fd, int op, ...)
 	return __syscall_fcntl64_3(fd, op, arg);
 }
 
+// Although set_thread_area is not variadic follow the same naming scheme,
+// we need to both initialize the Wasm global and forward the data to the kernel
+long __syscall_set_thread_area_1(int tp);
+
+long __syscall_set_thread_area(int tp)
+{
+	// Set the global used by Wasm code
+	__builtin_cheerp_set_thread_pointer(tp);
+	// Also inform the kernel for internal use
+	return __syscall_set_thread_area_1(tp);
+}
+
 }
