@@ -41,6 +41,11 @@ extern "C" {
 
 void _start();
 
+long WEAK cheerp_futex_wait(void* uaddr, uint32_t val, int64_t timeout)
+{
+	return __builtin_cheerp_atomic_wait(uaddr, val, timeout);
+}
+
 std::atomic<uint32_t*> mainThreadWaitAddress = 0;
 
 uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
@@ -463,7 +468,7 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 			}
 			else
 			{
-				uint32_t ret = __builtin_cheerp_atomic_wait(uaddr, val, timeout);
+				uint32_t ret = cheerp_futex_wait(uaddr, val, timeout);
 				if (ret == 1)
 					return -EAGAIN; // Value at uaddr did not match val.
 				else if (ret == 2)
