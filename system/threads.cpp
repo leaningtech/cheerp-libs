@@ -407,14 +407,20 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 	(void)isRealTime;
 
 	// These ops are currently not implemented, since musl doesn't use them.
-	assert(futex_op != FUTEX_FD);
-	assert(futex_op != FUTEX_WAKE_OP);
-	assert(futex_op != FUTEX_WAIT_BITSET);
-	assert(futex_op != FUTEX_WAKE_BITSET);
-	assert(futex_op != FUTEX_LOCK_PI2);
-	assert(futex_op != FUTEX_TRYLOCK_PI);
-	assert(futex_op != FUTEX_CMP_REQUEUE_PI);
-	assert(futex_op != FUTEX_WAIT_REQUEUE_PI);
+	switch (futex_op)
+	{
+		case FUTEX_FD:
+		case FUTEX_WAKE_OP:
+		case FUTEX_WAIT_BITSET:
+		case FUTEX_WAKE_BITSET:
+		case FUTEX_LOCK_PI2:
+		case FUTEX_TRYLOCK_PI:
+		case FUTEX_CMP_REQUEUE_PI:
+		case FUTEX_WAIT_REQUEUE_PI:
+			abort();
+		default:
+			break;
+	}
 
 	switch (futex_op)
 	{
@@ -504,17 +510,16 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 		case FUTEX_LOCK_PI:
 		{
 			// TODO
-			assert(false);
+			abort();
 		}
 		case FUTEX_UNLOCK_PI:
 		{
 			// TODO
-			assert(false);
+			abort();
 		}
 		default:
 		{
-			// This should be unreachable, all unhandled cases are asserted for at the top.
-			assert(false);
+			abort();
 		}
 	}
 }
