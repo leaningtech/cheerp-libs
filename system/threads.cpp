@@ -2,6 +2,7 @@
 #include <cerrno>
 #include <cstdarg>
 #include <cstdint>
+#include <cstdlib>
 #include <sched.h>
 #include <atomic>
 #include <sysexits.h>
@@ -50,6 +51,9 @@ std::atomic<uint32_t*> mainThreadWaitAddress = 0;
 
 uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
 {
+	if (amount == 0)
+		return 0;
+
 	uint32_t threadsWokenUp = 0;
 	// If the main thread is waiting on this address, handle this case specially.
 	futexSpinLock.lock();
