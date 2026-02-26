@@ -464,18 +464,30 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 					clock_gettime(CLOCK_MONOTONIC, &startTimeStruct);
 					startTime = startTimeStruct.tv_sec * 1000000000 + startTimeStruct.tv_nsec;
 				}
-				while (mainThreadWaitAddress.load() != 0)
-				{
-					if (timeout != -1)
+					while (mainThreadWaitAddress.load() != 0)
 					{
-						struct timespec timeNowStruct;
-						clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
-						int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
-						if (timeNow - startTime >= timeout)
-							return -ETIMEDOUT;
+						if (timeout != -1)
+						{
+							struct timespec timeNowStruct;
+							clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
+							int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
+							if (timeNow - startTime >= timeout)
+							{
+								// Clear stale waiter state if this wait really timed out.
+								bool timedOut = false;
+								futexSpinLock.lock();
+								if (mainThreadWaitAddress.load() == uaddr)
+								{
+									mainThreadWaitAddress.store(0);
+									timedOut = true;
+								}
+								futexSpinLock.unlock();
+								if (timedOut)
+									return -ETIMEDOUT;
+							}
+						}
 					}
 				}
-			}
 			else
 			{
 				uint32_t ret = cheerp_futex_wait(uaddr, val, timeout);
