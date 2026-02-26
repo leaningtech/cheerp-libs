@@ -504,6 +504,7 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 			uint32_t val = va_arg(args, uint32_t);
 			uint32_t val2 = va_arg(args, unsigned long);
 			uint32_t* uaddr2 = va_arg(args, uint32_t*);
+			(void)uaddr2;
 
 			if (futex_op == FUTEX_CMP_REQUEUE)
 			{
