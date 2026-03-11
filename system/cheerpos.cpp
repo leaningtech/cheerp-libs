@@ -12,7 +12,7 @@ extern "C" {
 
 extern void* __dl_open(const char* file, int mode);
 extern void* __dl_symbol(void* handle, const char* name);
-extern int __exc_setjmp(void* buf, int funcId, int funcOffset);
+extern int __exc_setjmp(void* buf, int stackTarget, int funcId, int funcOffset);
 extern void __exc_longjmp(void* buf, int val);
 
 // Implement dlopen / dlsym at the kernel level
@@ -36,8 +36,9 @@ __attribute__((always_inline)) int setjmp(jmp_buf buf)
 	// Unsure if there is a convention about the meaning of the slots
 	buf->__jb[0] = reinterpret_cast<unsigned long>(&stackMarker);
 	assert(sizeof(uint32_t) * 3 <= sizeof(jmp_buf));
+	int stackPtr = reinterpret_cast<int>(__builtin_cheerp_stack_save());
 	// The kernel will populate other data
-	return __exc_setjmp(buf, __builtin_cheerp_func_id(), __builtin_cheerp_func_offset());
+	return __exc_setjmp(buf, stackPtr, __builtin_cheerp_func_id(), __builtin_cheerp_func_offset());
 }
 
 void longjmp(jmp_buf env, int val)
