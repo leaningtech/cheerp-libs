@@ -41,11 +41,24 @@ __attribute__((always_inline)) int setjmp(jmp_buf buf)
 	// The kernel will populate other data
 	return __exc_setjmp(buf, stackPtr, __builtin_cheerp_func_id(), __builtin_cheerp_func_offset());
 }
-
 void longjmp(jmp_buf env, int val)
 {
 	__exc_longjmp(env, val);
 	__builtin_unreachable();
+}
+
+// TODO: this currently is exactly the same as setjmp
+__attribute__((always_inline)) int sigsetjmp(jmp_buf buf, int sigmask)
+{
+	// Allocate an unused stack variable used as a marker during frame resolution
+	int stackMarker;
+	// HACK: force the stackMarker to not be optimized away. we need a stack
+	// frame for the unwinding to work
+	buf->__jb[0] = reinterpret_cast<unsigned long>(&stackMarker);
+	assert(sizeof(uint32_t) * 3 <= sizeof(jmp_buf));
+	int stackPtr = reinterpret_cast<int>(__builtin_cheerp_stack_save());
+	// The kernel will populate other data
+	return __exc_setjmp(buf, stackPtr, __builtin_cheerp_func_id(), __builtin_cheerp_func_offset());
 }
 
 long __syscall_statx(long a1,...)
