@@ -103,4 +103,18 @@ long __syscall_fcntl64(int fd, int op, ...)
 	return __syscall_fcntl64_3(fd, op, arg);
 }
 
+long __syscall_futex_6(unsigned long* uaddr, int futex_op, int arg1, int arg2, int arg3, int arg4);
+
+long __syscall_futex(unsigned long* uaddr, int futex_op, ...)
+{
+	va_list args;
+	va_start(args, futex_op);
+	int arg1 = va_arg(args, int);
+	int arg2 = va_arg(args, int);
+	int arg3 = va_arg(args, int);
+	int arg4 = va_arg(args, int);
+	va_end(args);
+	return __syscall_futex_6(uaddr, futex_op, arg1, arg2, arg3, arg4);
+}
+
 }
