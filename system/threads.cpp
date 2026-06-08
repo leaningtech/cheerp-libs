@@ -71,9 +71,6 @@ uint32_t wakeThreadsFutex(uint32_t* uaddr, uint32_t amount)
 
 }
 
-[[cheerp::wasm]]
-long __syscall_set_thread_area(unsigned long tp);
-
 [[cheerp::genericjs]]
 void startWorkerFunction(unsigned int fp, unsigned int args, unsigned int tls, int newThreadId, unsigned int stack, unsigned int ctid)
 {
@@ -234,7 +231,7 @@ void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newT
 	// This is the setup for a worker thread.
 	// Set the thread pointer
 	if (tp != 0)
-		__syscall_set_thread_area(tp);
+		__builtin_cheerp_set_thread_pointer(tp);
 	// Assign tid
 	tid = newThreadId;
 	// Set the clear_child_tid if necessary

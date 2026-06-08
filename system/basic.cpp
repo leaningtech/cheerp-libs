@@ -25,9 +25,6 @@ char* volatile _heapEnd = (char*)0xdeadbeef;
 #endif
 long WEAK __syscall_set_thread_area(unsigned long tp)
 {
-#if defined(__CHEERP__) && defined(__ASMJS__)
-	__builtin_cheerp_set_thread_pointer(tp);
-#endif
 	return 0;
 }
 
