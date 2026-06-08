@@ -24,6 +24,7 @@ namespace [[cheerp::genericjs]] client {
 		void set_tid(int);
 		int get_tid();
 		void set_stack(int);
+		int get_ctid();
 		void set_ctid(int);
 	};
 }
@@ -224,21 +225,38 @@ void worker_close()
 	__builtin_cheerp_throw(throwObj);
 }
 
+// NOTE: the following two helpers are needed because the signature of __startThread
+// is fixed and shared with CheerpOS, so we get the missing arguments from
+// the global threading object
+[[cheerp::genericjs]]
+unsigned int getTidFromThreadingObject()
+{
+	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
+	return threadingObject->get_tid();
+}
+
+[[cheerp::genericjs]]
+unsigned int getCtidFromThreadingObject()
+{
+	client::ThreadingObject* threadingObject = __builtin_cheerp_get_threading_object();
+	return threadingObject->get_ctid();
+}
+
+// This is also defined in cheerp-musl as a weak symbol
 [[cheerp::wasm]]
 [[cheerp::jsexport]]
-void workerEntry(unsigned long tp, unsigned int func, unsigned int arg, int newThreadId, unsigned int ctid)
+void __startThread(unsigned int func, unsigned int arg, unsigned int tp)
 {
 	// This is the setup for a worker thread.
 	// Set the thread pointer
 	if (tp != 0)
 		__builtin_cheerp_set_thread_pointer(tp);
 	// Assign tid
-	tid = newThreadId;
-	// Set the clear_child_tid if necessary
-	if (ctid != 0)
-		clear_child_tid = reinterpret_cast<int *>(ctid);
+	tid = getTidFromThreadingObject();
+	// Assign ctid
+	clear_child_tid = reinterpret_cast<int*>(getCtidFromThreadingObject());
 	// Call the function passed to pthread_create with the arguments passed
-	void *(*entry)(void *) = reinterpret_cast<void*(*)(void*)>(func);
+	int(*entry)(void *) = reinterpret_cast<int(*)(void*)>(func);
 	void *argument = reinterpret_cast<void *>(arg);
 	entry(argument);
 }
