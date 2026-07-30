@@ -20,14 +20,6 @@ char* volatile _heapStart = (char*)0xdeadbeef;
 char* volatile _heapEnd = (char*)0xdeadbeef;
 #endif
 
-#ifdef __ASMJS__
-[[cheerp::wasm]]
-#endif
-long WEAK __syscall_set_thread_area(unsigned long tp)
-{
-	return 0;
-}
-
 long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
 {
 	va_list args;

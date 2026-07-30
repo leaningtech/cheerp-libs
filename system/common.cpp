@@ -386,6 +386,14 @@ long WEAK __syscall_set_tid_address(int *tidptr)
 	return tid;
 }
 
+#ifdef __ASMJS__
+[[cheerp::wasm]]
+#endif
+long WEAK __syscall_set_thread_area(unsigned long tp)
+{
+	return 0;
+}
+
 long WEAK __syscall_sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 {
 	return sys_internal::sched_getaffinity(pid, cpusetsize, mask);
