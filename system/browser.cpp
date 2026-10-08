@@ -301,7 +301,9 @@ int WEAK __syscall_access(const char *pathname, int mode)
 bool testUseAtomicWaitJS()
 {
 	bool canWait;
-	__asm__("(()=>{var ret;try{Atomics.wait(HEAP32,0,0,0);ret=true;}catch(e){ret=false;}return ret;})()" : "=r"(canWait));
+	// NOTE: Atomics.wait throws on agents that cannot block (e.g. the browser main thread) before comparing the value;
+	// the expected value never matches the zeroed buffer, so on other agents it returns "not-equal" without waiting.
+	__asm__("(()=>{try{Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,1,0);return true;}catch(e){return false;}})()" : "=r"(canWait));
 	return canWait;
 }
 
