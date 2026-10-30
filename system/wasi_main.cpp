@@ -1,6 +1,5 @@
 // Copyright 2023-2025 Leaning Technologies
 
-#include <cstdarg>
 #include <sysexits.h>
 #include "wasi_api.h"
 #include "impl.h"
@@ -89,9 +88,9 @@ void __syscall_main_environ()
 } // extern "C"
 
 namespace sys_internal {
-long futex_wrapper(uint32_t* uaddr, int futex_op, va_list args)
+long futex_wrapper(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
 {
-	return futex(uaddr, futex_op, true, args);
+	return futex(uaddr, futex_op, val, timeout, uaddr2, val3, true);
 }
 
 } // namespace sys_internal

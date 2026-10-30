@@ -15,8 +15,8 @@ namespace sys_internal {
 	long tkill(pid_t tid, int sig);
 	long exit_group(long code);
 	long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask);
-	long futex_wrapper(uint32_t* uaddr, int futex_op, va_list args);
-	long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args);
+	long futex_wrapper(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3);
+	long futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3, bool canUseAtomics);
 	[[cheerp::wasm]] void killAllThreads();
 	bool isBrowserMainThread();
 }

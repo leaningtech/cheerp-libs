@@ -222,10 +222,10 @@ bool isBrowserMainThread()
 	return (canUseAtomicWait == NO);
 }
 
-long futex_wrapper(uint32_t* uaddr, int futex_op, va_list args)
+long futex_wrapper(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3)
 {
 	bool canUseAtomic = !isBrowserMainThread();
-	return futex(uaddr, futex_op, canUseAtomic, args);
+	return futex(uaddr, futex_op, val, timeout, uaddr2, val3, canUseAtomic);
 }
 
 [[cheerp::wasm]]
@@ -271,7 +271,7 @@ int WEAK __syscall_read(int fd, void* buf, int count)
 	return -ENOSYS;
 }
 
-long WEAK __syscall_open(const char* pathname, int flags, ...)
+long WEAK __syscall_open(const char* pathname, int flags, int mode)
 {
 	return -ENOSYS;
 

@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <errno.h>
 #include <setjmp.h>
-#include <stdarg.h>
 #include <string.h>
 
 #include "impl.h"
@@ -59,62 +58,6 @@ __attribute__((always_inline)) int sigsetjmp(jmp_buf buf, int sigmask)
 	int stackPtr = reinterpret_cast<int>(__builtin_cheerp_stack_save());
 	// The kernel will populate other data
 	return __exc_setjmp(buf, stackPtr, __builtin_cheerp_func_id(), __builtin_cheerp_func_offset());
-}
-
-long __syscall_statx(long a1,...)
-{
-	// Make this fail to reach the 64-bit versions
-	return -ENOSYS;
-}
-
-// Forward variadic syscalls to extended versions, we cannot use variadic calls across user/kernel boundary
-// NOTE: This is dirty, there might not be extra arguments, in which case
-//       we read undefined values, but if actually required it should be there
-long __syscall_open_3(const char* pathname, int flags, int mode);
-
-long __syscall_open(const char* pathname, int flags, ...)
-{
-	va_list args;
-	va_start(args, flags);
-	int mode = va_arg(args, int);
-	va_end(args);
-	return __syscall_open_3(pathname, flags, mode);
-}
-
-long __syscall_openat_4(int dirfd, const char *pathname, int flags, int mode);
-
-long __syscall_openat(int dirfd, const char *pathname, int flags, ...)
-{
-	va_list args;
-	va_start(args, flags);
-	int mode = va_arg(args, int);
-	va_end(args);
-	return __syscall_openat_4(dirfd, pathname, flags, mode);
-}
-
-long __syscall_fcntl64_3(int fd, int op, int arg);
-
-long __syscall_fcntl64(int fd, int op, ...)
-{
-	va_list args;
-	va_start(args, op);
-	int arg = va_arg(args, int);
-	va_end(args);
-	return __syscall_fcntl64_3(fd, op, arg);
-}
-
-long __syscall_futex_6(unsigned long* uaddr, int futex_op, int arg1, int arg2, int arg3, int arg4);
-
-long __syscall_futex(unsigned long* uaddr, int futex_op, ...)
-{
-	va_list args;
-	va_start(args, futex_op);
-	int arg1 = va_arg(args, int);
-	int arg2 = va_arg(args, int);
-	int arg3 = va_arg(args, int);
-	int arg4 = va_arg(args, int);
-	va_end(args);
-	return __syscall_futex_6(uaddr, futex_op, arg1, arg2, arg3, arg4);
 }
 
 }

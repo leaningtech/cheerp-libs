@@ -171,7 +171,12 @@ long WEAK __syscall_set_robust_list(void* head, long len)
 	return -ENOSYS;
 }
 
-long WEAK __syscall_fcntl64(long fd, int op, ...)
+long WEAK __syscall_futex(const volatile void* uaddr, int futex_op, int val, const struct timespec* timeout, const volatile void* uaddr2, int val3)
+{
+	return sys_internal::futex_wrapper((uint32_t*)uaddr, futex_op, val, timeout, (uint32_t*)uaddr2, val3);
+}
+
+long WEAK __syscall_fcntl64(int fd, int op, unsigned long arg)
 {
 	return -ENOSYS;
 }

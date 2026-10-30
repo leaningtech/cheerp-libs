@@ -1,6 +1,5 @@
 #include <cassert>
 #include <cerrno>
-#include <cstdarg>
 #include <cstdint>
 #include <cstdlib>
 #include <sched.h>
@@ -323,7 +322,7 @@ void actuallyKillThreads()
 }
 
 long __syscall_exit(long);
-long __syscall_futex(uint32_t* uaddr, int futex_op, ...);
+long __syscall_futex(const volatile void* uaddr, int futex_op, int val, const struct timespec* timeout, const volatile void* uaddr2, int val3);
 
 } // extern "C"
 
@@ -412,7 +411,7 @@ long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 	return cpusetsize;
 }
 
-long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
+long futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3, bool canUseAtomics)
 {
 	bool isPrivate = futex_op & FUTEX_PRIVATE;
 	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
@@ -441,17 +440,14 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 	{
 		case FUTEX_WAKE:
 		{
-			uint32_t val = va_arg(args, uint32_t);
-
 			return wakeThreadsFutex(uaddr, val);
 		}
 		case FUTEX_WAIT:
 		{
-			uint32_t val = va_arg(args, uint32_t);
-			const struct timespec *ts = va_arg(args, const struct timespec *);
-			int64_t timeout = -1;
+			const struct timespec *ts = timeout;
+			int64_t timeoutNs = -1;
 			if (ts != nullptr)
-				timeout = ts->tv_sec * 1000000000 + ts->tv_nsec;
+				timeoutNs = ts->tv_sec * 1000000000 + ts->tv_nsec;
 
 			// If this is the main thread, it's illegal to do a futex wait operation.
 			// Instead, we busy wait while checking a special value.
@@ -473,7 +469,7 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 				}
 				futexSpinLock.unlock();
 				int64_t startTime = 0;
-				if (timeout != -1)
+				if (timeoutNs != -1)
 				{
 					struct timespec startTimeStruct;
 					clock_gettime(CLOCK_MONOTONIC, &startTimeStruct);
@@ -481,12 +477,12 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 				}
 					while (mainThreadWaitAddress.load() != 0)
 					{
-						if (timeout != -1)
+						if (timeoutNs != -1)
 						{
 							struct timespec timeNowStruct;
 							clock_gettime(CLOCK_MONOTONIC, &timeNowStruct);
 							int64_t timeNow = timeNowStruct.tv_sec * 1000000000 + timeNowStruct.tv_nsec;
-							if (timeNow - startTime >= timeout)
+							if (timeNow - startTime >= timeoutNs)
 							{
 								// Clear stale waiter state if this wait really timed out.
 								bool timedOut = false;
@@ -505,7 +501,7 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 				}
 			else
 			{
-				uint32_t ret = cheerp_futex_wait(uaddr, val, timeout);
+				uint32_t ret = cheerp_futex_wait(uaddr, val, timeoutNs);
 				if (ret == 1)
 					return -EAGAIN; // Value at uaddr did not match val.
 				else if (ret == 2)
@@ -516,14 +512,12 @@ long futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
 		case FUTEX_REQUEUE:
 		case FUTEX_CMP_REQUEUE:
 		{
-			uint32_t val = va_arg(args, uint32_t);
-			uint32_t val2 = va_arg(args, unsigned long);
-			uint32_t* uaddr2 = va_arg(args, uint32_t*);
+			// NOTE: The requeue operations pass val2 in the timeout argument
+			uint32_t val2 = (uint32_t)(uintptr_t)timeout;
 			(void)uaddr2;
 
 			if (futex_op == FUTEX_CMP_REQUEUE)
 			{
-				uint32_t val3 = va_arg(args, uint32_t);
 				if (*uaddr != val3)
 					return -EAGAIN;
 			}
