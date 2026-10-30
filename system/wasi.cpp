@@ -122,7 +122,7 @@ long WEAK __syscall_write(int fd, void* buf, long count)
 	return err? -err : ret;
 }
 
-long WEAK __syscall_open(const char* pathname, int flags, ...)
+long WEAK __syscall_open(const char* pathname, int flags, int mode)
 {
 	if (rootFd < 0)
 	{

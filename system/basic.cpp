@@ -1,6 +1,5 @@
 // Copyright 2023-2025 Leaning Technologies
 
-#include <cstdarg>
 #include <errno.h>
 #include "impl.h"
 
@@ -20,20 +19,11 @@ char* volatile _heapStart = (char*)0xdeadbeef;
 char* volatile _heapEnd = (char*)0xdeadbeef;
 #endif
 
-long WEAK __syscall_futex(uint32_t* uaddr, int futex_op, ...)
-{
-	va_list args;
-	va_start(args, futex_op);
-	int ret = sys_internal::futex_wrapper(uaddr, futex_op, args);
-	va_end(args);
-	return ret;
-}
-
 }
 
 namespace sys_internal {
 
-long WEAK futex(uint32_t* uaddr, int futex_op, bool canUseAtomics, va_list args)
+long WEAK futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3, bool canUseAtomics)
 {
 	return -ENOSYS;
 }
