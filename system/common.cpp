@@ -13,6 +13,8 @@ extern "C" {
 #include <cstdarg>
 #include <cheerpintrin.h>
 #include <cheerp/clientlib.h>
+#include <linux/futex.h>
+#include <linux/time_types.h>
 
 #  define LEAN_CXX_LIB
 #  include <client/cheerp/types.h>
@@ -171,9 +173,38 @@ long WEAK __syscall_set_robust_list(void* head, long len)
 	return -ENOSYS;
 }
 
-long WEAK __syscall_futex(const volatile void* uaddr, int futex_op, int val, const struct timespec* timeout, const volatile void* uaddr2, int val3)
+static bool futexCmdHasTimeout(int futex_op)
 {
-	return sys_internal::futex_wrapper((uint32_t*)uaddr, futex_op, val, timeout, (uint32_t*)uaddr2, val3);
+	int cmd = futex_op & FUTEX_CMD_MASK;
+	return cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI || cmd == FUTEX_LOCK_PI2 || cmd == FUTEX_WAIT_BITSET ||
+		cmd == FUTEX_WAIT_REQUEUE_PI;
+}
+
+extern "C++" {
+// NOTE: The operations without a timeout take a count in that argument instead.
+template<typename KernelTimespec>
+static long futexWithTimeout(const volatile void* uaddr, int futex_op, int val, const KernelTimespec* timeout, const volatile void* uaddr2, int val3)
+{
+	struct timespec ts;
+	const struct timespec* arg = reinterpret_cast<const struct timespec*>(timeout);
+	if (timeout && futexCmdHasTimeout(futex_op))
+	{
+		ts.tv_sec = timeout->tv_sec;
+		ts.tv_nsec = timeout->tv_nsec;
+		arg = &ts;
+	}
+	return sys_internal::futex_wrapper((uint32_t*)uaddr, futex_op, val, arg, (uint32_t*)uaddr2, val3);
+}
+}
+
+long WEAK __syscall_futex(const volatile void* uaddr, int futex_op, int val, const struct __kernel_old_timespec* timeout, const volatile void* uaddr2, int val3)
+{
+	return futexWithTimeout(uaddr, futex_op, val, timeout, uaddr2, val3);
+}
+
+long WEAK __syscall_futex_time64(const volatile void* uaddr, int futex_op, int val, const struct __kernel_timespec* timeout, const volatile void* uaddr2, int val3)
+{
+	return futexWithTimeout(uaddr, futex_op, val, timeout, uaddr2, val3);
 }
 
 long WEAK __syscall_fcntl64(int fd, int op, unsigned long arg)
