@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <atomic>
 #include <sysexits.h>
+#include <linux/time_types.h>
 
 #include <cheerpintrin.h>
 #define LEAN_CXX_LIB
@@ -322,7 +323,7 @@ void actuallyKillThreads()
 }
 
 long __syscall_exit(long);
-long __syscall_futex(const volatile void* uaddr, int futex_op, int val, const struct timespec* timeout, const volatile void* uaddr2, int val3);
+long __syscall_futex(const volatile void* uaddr, int futex_op, int val, const struct __kernel_old_timespec* timeout, const volatile void* uaddr2, int val3);
 
 } // extern "C"
 
