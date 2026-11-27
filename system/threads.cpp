@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <atomic>
 #include <sysexits.h>
+#include <linux/futex.h>
 #include <linux/time_types.h>
 
 #include <cheerpintrin.h>
@@ -13,7 +14,6 @@
 #include <cheerp/client.h>
 
 #include "impl.h"
-#include "futex.h"
 
 namespace [[cheerp::genericjs]] client {
 	class ThreadingObject : public Object{
@@ -414,9 +414,9 @@ long sched_getaffinity(pid_t pid, int cpusetsize, unsigned long* mask)
 
 long futex(uint32_t* uaddr, int futex_op, uint32_t val, const struct timespec* timeout, uint32_t* uaddr2, uint32_t val3, bool canUseAtomics)
 {
-	bool isPrivate = futex_op & FUTEX_PRIVATE;
+	bool isPrivate = futex_op & FUTEX_PRIVATE_FLAG;
 	bool isRealTime = futex_op & FUTEX_CLOCK_REALTIME;
-	futex_op &= ~FUTEX_PRIVATE;
+	futex_op &= ~FUTEX_PRIVATE_FLAG;
 	futex_op &= ~FUTEX_CLOCK_REALTIME;
 	(void)isPrivate;
 	(void)isRealTime;

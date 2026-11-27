@@ -11,7 +11,6 @@ extern "C" {
 #include <cheerp/client.h>
 
 #include "impl.h"
-#include "futex.h"
 
 namespace [[cheerp::genericjs]] client {
 	class CheerpException: public Error {
